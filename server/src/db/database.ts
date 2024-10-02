@@ -50,6 +50,24 @@ class Database {
 
     return result.rows[0][returningColumn];
   }
+
+  public static async updateIntoTable(
+    tableName: string,
+    dataDict: IDataDict,
+  ): Promise<void> {
+    const columns = Object.keys(dataDict).filter((key) => key !== 'id');
+    const values = columns.map((col) => dataDict[col]);
+
+    const setClause = columns.map((col, index) => `${col} = $${index + 1}`).join(', ');
+
+    const query = `
+    UPDATE ${tableName}
+    SET ${setClause}
+    WHERE id = $${columns.length + 1};
+  `;
+
+    await this.pool.query(query, [...values, dataDict.id]);
+  }
 }
 
 export default Database;
