@@ -54,8 +54,9 @@ class Database {
   public static async updateIntoTable(
     tableName: string,
     dataDict: IDataDict,
+    referenceColumn = 'id',
   ): Promise<void> {
-    const columns = Object.keys(dataDict).filter((key) => key !== 'id');
+    const columns = Object.keys(dataDict).filter((key) => key !== referenceColumn);
     const values = columns.map((col) => dataDict[col]);
 
     const setClause = columns.map((col, index) => `${col} = $${index + 1}`).join(', ');
@@ -63,10 +64,10 @@ class Database {
     const query = `
     UPDATE ${tableName}
     SET ${setClause}
-    WHERE id = $${columns.length + 1};
+    WHERE ${referenceColumn} = $${columns.length + 1};
   `;
 
-    await this.pool.query(query, [...values, dataDict.id]);
+    await this.pool.query(query, [...values, dataDict[referenceColumn]]);
   }
 
   public static async searchAll<T>(
