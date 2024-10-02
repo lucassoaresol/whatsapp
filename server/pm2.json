@@ -1,0 +1,14 @@
+{
+  "apps": [
+    {
+      "name": "whatsapp-api",
+      "script": "pnpm",
+      "args": "start:api"
+    },
+    {
+      "name": "whatsapp-job",
+      "script": "pnpm",
+      "args": "start:job"
+    }
+  ]
+}
