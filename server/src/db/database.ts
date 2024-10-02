@@ -98,6 +98,19 @@ class Database {
     const result = await this.pool.query(query);
     return result.rows as T[];
   }
+
+  public static async deleteFromTable(
+    tableName: string,
+    id: number | string,
+    idColumn: string = 'id',
+  ): Promise<void> {
+    const query = `
+      DELETE FROM ${tableName}
+      WHERE ${idColumn} = $1;
+    `;
+
+    await this.pool.query(query, [id]);
+  }
 }
 
 export default Database;
