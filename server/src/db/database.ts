@@ -68,6 +68,36 @@ class Database {
 
     await this.pool.query(query, [...values, dataDict.id]);
   }
+
+  public static async searchAll<T>(
+    table: string,
+    fields: string[] | null = null,
+  ): Promise<T[]> {
+    let query: string;
+
+    if (fields && fields.length > 0) {
+      if (fields.length === 1) {
+        query = `
+          SELECT ${fields[0]}
+          FROM ${table};
+        `;
+      } else {
+        const selectedFields = fields.join(', ');
+        query = `
+          SELECT ${selectedFields}
+          FROM ${table};
+        `;
+      }
+    } else {
+      query = `
+        SELECT *
+        FROM ${table};
+      `;
+    }
+
+    const result = await this.pool.query(query);
+    return result.rows as T[];
+  }
 }
 
 export default Database;
