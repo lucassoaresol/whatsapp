@@ -1,6 +1,7 @@
 import pkg from 'pg';
 
 import { env } from '../config/env';
+import { IDataDict } from '../interfaces/dataDict';
 
 const { Pool } = pkg;
 
@@ -27,6 +28,27 @@ class Database {
       throw new Error('Pool não inicializado. Chame connectPool() primeiro.');
     }
     return Database.pool;
+  }
+
+  public static async insertIntoTable(
+    tableName: string,
+    dataDict: IDataDict,
+    returningColumn = 'id',
+  ): Promise<number | string> {
+    const columns = Object.keys(dataDict);
+    const values = columns.map((col) => dataDict[col]);
+
+    const placeholders = columns.map((_, index) => `$${index + 1}`).join(', ');
+
+    const query = `
+        INSERT INTO ${tableName} (${columns.join(', ')})
+        VALUES (${placeholders})
+        RETURNING ${returningColumn};
+      `;
+
+    const result = await this.pool.query(query, values);
+
+    return result.rows[0][returningColumn];
   }
 }
 
