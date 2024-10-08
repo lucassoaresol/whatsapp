@@ -1,7 +1,7 @@
 -- up
 CREATE TABLE "votes" (
   "id" SERIAL NOT NULL,
-  "selectedName" TEXT NOT NULL,
+  "selected_name" TEXT NOT NULL,
   "is_new" BOOLEAN NOT NULL DEFAULT true,
   "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "chat_id" TEXT NOT NULL,
