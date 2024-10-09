@@ -9,8 +9,8 @@
     "dev:api": "tsx watch src/api/index.ts",
     "dev:job": "tsx watch src/job/index.ts",
     "lint": "eslint src/**/*.ts --fix",
-    "start:api": "node dist/api/index.js",
-    "start:job": "node dist/job/index.js",
+    "start:api": "node dist/api/index.cjs",
+    "start:job": "node dist/job/index.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
