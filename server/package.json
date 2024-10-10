@@ -6,11 +6,9 @@
   "type": "module",
   "scripts": {
     "build": "tsup src",
-    "dev:api": "tsx watch src/api/index.ts",
-    "dev:job": "tsx watch src/job/index.ts",
+    "dev": "tsx watch src/index.ts",
     "lint": "eslint src/**/*.ts --fix",
-    "start:api": "node dist/api/index.cjs",
-    "start:job": "node dist/job/index.cjs",
+    "start": "node dist/index.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -1,14 +1,26 @@
-import { env } from '../config/env.js';
+import cors from 'cors';
+import express from 'express';
 
-import app from './app.js';
+import { getClientManager } from '../models/clientManager.js';
 
-async function startServer() {
-  try {
-    app.listen(env.port, () => console.log(`Servidor iniciado na porta ${env.port}`));
-  } catch (error) {
-    console.error('Failed to connect to the database', error);
-    process.exit(1);
-  }
-}
+import verifyClient from './middlewares/verifyClient.js';
+import verifyClientConnect from './middlewares/verifyClientConnect.js';
+import clientRouter from './routes/client.js';
+import clientManagerRouter from './routes/clientManager.js';
 
-startServer();
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public'));
+
+app.use(async (req, res, next) => {
+  const clientManager = await getClientManager();
+  req.clientManager = clientManager;
+  next();
+});
+
+app.use('/clients', clientRouter);
+app.use('/:id', verifyClient, verifyClientConnect, clientManagerRouter);
+
+export default app;
