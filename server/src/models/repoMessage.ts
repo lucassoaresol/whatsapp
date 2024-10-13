@@ -16,12 +16,15 @@ class RepoMessage {
   public async save() {
     const database = await databasePromise;
 
-    const repoMessageData = await database.insertIntoTable('repo_messages', {
-      msg_id: this.msgId,
-      data: this.data,
-      from_me: this.fromMe,
-      chat_id: this.chatId,
-      client_id: this.clientId,
+    const repoMessageData = await database.insertIntoTable({
+      table: 'repo_messages',
+      dataDict: {
+        msg_id: this.msgId,
+        data: this.data,
+        from_me: this.fromMe,
+        chat_id: this.chatId,
+        client_id: this.clientId,
+      },
     });
     this.id = Number(repoMessageData);
   }
@@ -29,7 +32,7 @@ class RepoMessage {
   public async destroy() {
     const database = await databasePromise;
 
-    await database.deleteFromTable('repo_messages', this.id!);
+    await database.deleteFromTable({ table: 'repo_messages', where: { id: this.id! } });
   }
 
   public async getClientWPP() {
