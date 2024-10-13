@@ -13,7 +13,9 @@ class RepoMessageManager {
     try {
       const database = await databasePromise;
 
-      const resultMessages = await database.searchAll<IRepoMessage>('repo_messages');
+      const resultMessages = await database.findMany<IRepoMessage>({
+        table: 'repo_messages',
+      });
 
       for (const msg of resultMessages) {
         await this.addMessage(msg);
@@ -65,41 +67,65 @@ class RepoMessageManager {
 
     const { chat_id } = messageData;
     const chatData = await clientWPP.getChatById(chat_id);
+    const contact = await clientWPP.getContactById(chat_id);
+    const profilePicUrl = await contact.getProfilePicUrl();
     let chatName = chatData.name || '';
     const chatIsGroup = chatData.isGroup;
 
     if (!chatIsGroup) {
-      const contact = await clientWPP.getContactById(chat_id);
       if (contact.pushname) chatName = contact.pushname;
     }
 
-    const chat = await database.searchUniqueByField<IChat>('chats', 'id', chat_id);
+    const chat = await database.findFirst<IChat>({
+      table: 'chats',
+      where: { id: chat_id },
+    });
 
     if (chat) {
-      if (!chatIsGroup && chat.name !== chatName) {
-        await database.updateIntoTable('chats', { id: chat_id, name: chatName });
+      if (!chatIsGroup) {
+        if (chat.name !== chatName) {
+          await database.updateIntoTable({
+            table: 'chats',
+            dataDict: { name: chatName },
+            where: { id: chat_id },
+          });
+        }
+
+        if (chat.profile_pic_url !== profilePicUrl) {
+          await database.updateIntoTable({
+            table: 'chats',
+            dataDict: { profile_pic_url: profilePicUrl },
+            where: { id: chat_id },
+          });
+        }
       }
     } else {
-      await database.insertIntoTable('chats', {
-        id: chat_id,
-        name: chatName,
-        is_group: chatIsGroup,
+      await database.insertIntoTable({
+        table: 'chats',
+        dataDict: {
+          id: chat_id,
+          name: chatName,
+          is_group: chatIsGroup,
+          profile_pic_url: profilePicUrl,
+        },
       });
     }
 
-    const message = await database.searchUniqueByField<IMessage>(
-      'messages',
-      'id',
-      messageData.msg_id,
-    );
+    const message = await database.findFirst<IMessage>({
+      table: 'messages',
+      where: { id: messageData.msg_id },
+    });
 
     if (!message) {
-      await database.insertIntoTable('messages', {
-        id: messageData.msg_id,
-        data: messageData.data,
-        from_me: messageData.from_me,
-        chat_id,
-        client_id: messageData.client_id,
+      await database.insertIntoTable({
+        table: 'messages',
+        dataDict: {
+          id: messageData.msg_id,
+          data: messageData.data,
+          from_me: messageData.from_me,
+          chat_id,
+          client_id: messageData.client_id,
+        },
       });
     }
 
