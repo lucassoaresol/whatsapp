@@ -21,8 +21,8 @@ export function formatTimestamp(timestamp: number) {
   }
 
   return {
-    date: dateDay.toDate(),
-    dateDisplay,
+    date: dateDay.format('YYYY-MM-DD HH:mm:ss.SSS'),
+    date_display: dateDisplay,
     hour: dateDay.format('HH:mm'),
   };
 }
