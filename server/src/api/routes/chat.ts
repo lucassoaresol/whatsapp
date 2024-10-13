@@ -1,39 +1,19 @@
 import { Request, Response, Router } from 'express';
 
+import databasePromise from '../../libs/database';
 import { formatTimestamp } from '../../utils/formatTimestamp';
 
 const chatRouter = Router();
 
 chatRouter.get('', async (req: Request, res: Response) => {
-  const client = req.client.getWpp();
-  const chats = await client.getChats();
+  const database = await databasePromise;
+  const clientId = req.client.getInfo().id;
 
-  const result = await Promise.all(
-    chats.map(async (ch) => {
-      let name = ch.name;
-      if (!ch.isGroup) {
-        name = (await client.getContactById(ch.id._serialized)).pushname;
-      }
-      const messages = await Promise.all(
-        (await ch.fetchMessages({ limit: 5 })).reverse().map((msg) => {
-          return {
-            id: msg.id._serialized,
-            body: msg.body,
-            fromMe: msg.fromMe,
-            ...formatTimestamp(msg.timestamp),
-            from: msg.author,
-          };
-        }),
-      );
-      return {
-        id: ch.id._serialized,
-        name,
-        isGroup: ch.isGroup,
-        unreadCount: ch.unreadCount,
-        ...formatTimestamp(ch.timestamp),
-        messages,
-      };
-    }),
+  const result = await database.query(
+    `SELECT c.id, c."name", c.is_group, c.profile_pic_url, cc.unread_count, cc."date",
+cc.date_display, cc."hour", cc.messages FROM clients_chats cc
+JOIN chats c ON cc.chat_id = c.id WHERE cc.client_id = $1 ORDER BY cc."date" DESC;`,
+    [clientId],
   );
 
   res.json(result);
