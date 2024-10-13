@@ -36,7 +36,6 @@
     "eslint-import-resolver-typescript": "3.6.3",
     "eslint-plugin-import": "2.30.0",
     "eslint-plugin-prettier": "5.2.1",
-    "prettier-plugin-sql": "^0.18.1",
     "tsup": "8.3.0",
     "tsx": "4.19.1",
     "typescript": "5.2.2"
