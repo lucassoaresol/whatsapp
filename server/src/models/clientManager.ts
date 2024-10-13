@@ -10,7 +10,7 @@ class ClientManager {
     try {
       const database = await databasePromise;
 
-      const resultClient = await database.searchAll<IClient>('clients');
+      const resultClient = await database.findMany<IClient>({ table: 'clients' });
       const clientIds = resultClient.map((row) => row.id);
 
       for (const id of clientIds) {
@@ -50,6 +50,10 @@ class ClientManager {
 
   public listClients() {
     return Array.from(this.clients.keys());
+  }
+
+  public getClients() {
+    return Array.from(this.clients.values());
   }
 }
 
