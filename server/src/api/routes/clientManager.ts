@@ -13,8 +13,10 @@ clientManagerRouter.get(
   async (req: Request, res: Response) => {
     const client = req.client.getWpp();
     const contact = await client.getContactById(req.params.contact_id);
+    const profilePicUrl = await contact.getProfilePicUrl();
+    const result = { ...contact, profilePicUrl };
 
-    res.json(contact);
+    res.json(result);
   },
 );
 
