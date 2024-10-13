@@ -15,10 +15,13 @@ class Vote {
   public async save() {
     const database = await databasePromise;
 
-    const dataVote = await database.insertIntoTable('votes', {
-      selected_name: this.selectedName,
-      chat_id: this.chatId,
-      client_id: this.clientId,
+    const dataVote = await database.insertIntoTable({
+      table: 'votes',
+      dataDict: {
+        selected_name: this.selectedName,
+        chat_id: this.chatId,
+        client_id: this.clientId,
+      },
     });
     console.log(`Vote with ID ${dataVote} has been added.`);
   }
@@ -27,7 +30,10 @@ class Vote {
     const database = await databasePromise;
 
     const clientWPP = await this.getClientWPP();
-    const chat = await database.searchUniqueByField<IChat>('chats', 'id', this.chatId);
+    const chat = await database.findFirst<IChat>({
+      table: 'chats',
+      where: { id: this.chatId },
+    });
 
     if (chat) {
       await this.save();
@@ -58,10 +64,13 @@ class Vote {
       if (contact.pushname) chatName = contact.pushname;
     }
 
-    await database.insertIntoTable('chats', {
-      id: this.chatId,
-      name: chatName,
-      is_group: chatIsGroup,
+    await database.insertIntoTable({
+      table: 'chats',
+      dataDict: {
+        id: this.chatId,
+        name: chatName,
+        is_group: chatIsGroup,
+      },
     });
   }
 }
