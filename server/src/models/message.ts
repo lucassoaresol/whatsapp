@@ -14,14 +14,17 @@ class Message {
   public async save() {
     const database = await databasePromise;
 
-    await database.insertIntoTable('messages', {
-      id: this.id,
-      data: this.data,
-      from_me: this.fromMe,
-      is_new: this.isNew,
-      created_at: this.createdAt,
-      chat_id: this.chatId,
-      client_id: this.clientId,
+    await database.insertIntoTable({
+      table: 'messages',
+      dataDict: {
+        id: this.id,
+        data: this.data,
+        from_me: this.fromMe,
+        is_new: this.isNew,
+        created_at: this.createdAt,
+        chat_id: this.chatId,
+        client_id: this.clientId,
+      },
     });
   }
 }
