@@ -4,6 +4,7 @@ import Whatsapp from 'whatsapp-web.js';
 import { IMessageWpp } from '../interfaces/message';
 import databasePromise from '../libs/database';
 
+import { getChatManager } from './chatManager';
 import RepoMessage from './repoMessage';
 import Vote from './vote';
 
@@ -41,7 +42,11 @@ class Client {
   }
 
   private listenEvents() {
-    this.wpp.on('ready', () => console.log(`Client ${this.id} ready!`));
+    this.wpp.on('ready', async () => {
+      console.log(`Client ${this.id} ready!`);
+      await getChatManager();
+      console.log('Chats loaded from database.');
+    });
 
     this.wpp.on('qr', async (qr) => {
       this.qrGeneratedAt = Date.now();
@@ -75,6 +80,8 @@ class Client {
       this.id,
     );
     await msg.save();
+    const chatManager = await getChatManager();
+    await chatManager.retrieveChatWpp(this, chatId);
   }
 
   private async saveVote(voteData: Whatsapp.PollVote) {
@@ -98,7 +105,7 @@ class Client {
   public async save() {
     const database = await databasePromise;
 
-    await database.insertIntoTable('clients', { id: this.id });
+    await database.insertIntoTable({ table: 'clients', dataDict: { id: this.id } });
   }
 
   public async start() {
