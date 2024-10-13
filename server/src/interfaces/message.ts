@@ -24,3 +24,13 @@ export interface IRepoMessage {
   chat_id: string;
   client_id: string;
 }
+
+export interface IMessageReturnWpp {
+  id: string;
+  body: string;
+  fromMe: boolean;
+  date: string;
+  dateDisplay: string;
+  hour: string;
+  from: string | null;
+}

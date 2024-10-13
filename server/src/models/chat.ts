@@ -10,10 +10,13 @@ class Chat {
   public async save() {
     const database = await databasePromise;
 
-    await database.insertIntoTable('chats', {
-      id: this.id,
-      name: this.name,
-      is_group: this.isGroup,
+    await database.insertIntoTable({
+      table: 'chats',
+      dataDict: {
+        id: this.id,
+        name: this.name,
+        is_group: this.isGroup,
+      },
     });
   }
 
@@ -22,7 +25,11 @@ class Chat {
 
     const database = await databasePromise;
 
-    await database.updateIntoTable('chats', { id: this.id, name: this.name });
+    await database.updateIntoTable({
+      table: 'chats',
+      dataDict: { name: this.name },
+      where: { id: this.id },
+    });
   }
 }
 
