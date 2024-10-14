@@ -36,7 +36,7 @@ class ChatManager {
     );
   }
 
-  private async saveChat(chat_id: string, client_id: string) {
+  public async saveChat(chat_id: string, client_id: string) {
     const database = await databasePromise;
 
     await database.insertIntoTable({
@@ -68,13 +68,16 @@ class ChatManager {
     const database = await databasePromise;
     const clientWpp = client.getWpp();
     const chat = await clientWpp.getChatById(id);
-    const contact = await clientWpp.getContactById(id);
     const isGroup = chat.isGroup;
     let name = chat.name;
-    const profilePicUrl = (await contact.getProfilePicUrl()) || null;
+    let profilePicUrl = null;
 
-    if (!isGroup) {
-      name = contact.pushname;
+    if (id.length > 7) {
+      const contact = await clientWpp.getContactById(id);
+      profilePicUrl = (await contact.getProfilePicUrl()) || null;
+      if (!isGroup) {
+        name = contact.pushname;
+      }
     }
 
     if (!name) {
@@ -119,37 +122,48 @@ class ChatManager {
       });
     }
 
-    const client_id = client.getInfo().id;
+    if (messages.length > 0) {
+      const client_id = client.getInfo().id;
 
-    const clientChat = await database.findFirst<IClientChat>({
-      table: 'clients_chats',
-      where: { client_id, chat_id: id },
-      select: { key: true },
-    });
-
-    if (clientChat) {
-      const key = clientChat.key;
-
-      await database.updateIntoTable<IClientChat>({
+      const clientChat = await database.findFirst<IClientChat>({
         table: 'clients_chats',
-        dataDict: {
-          unread_count: chat.unreadCount,
-          ...formatTimestamp(chat.timestamp),
-          messages: JSON.stringify(messages),
-        },
-        where: { key },
+        where: { client_id, chat_id: id },
+        select: { key: true },
       });
-    } else {
-      await database.insertIntoTable({
-        table: 'clients_chats',
-        dataDict: {
-          client_id,
-          chat_id: id,
-          unread_count: chat.unreadCount,
-          ...formatTimestamp(chat.timestamp),
-          messages: JSON.stringify(messages),
-        },
-      });
+
+      let dataDict = {
+        unread_count: chat.unreadCount,
+        ...formatTimestamp(chat.timestamp),
+        messages: JSON.stringify(messages),
+      };
+
+      if (dataDict.date === 'Invalid Date') {
+        dataDict = {
+          ...dataDict,
+          date: messages[0].date,
+          date_display: messages[0].date_display,
+          hour: messages[0].hour,
+        };
+      }
+
+      if (clientChat) {
+        const key = clientChat.key;
+
+        await database.updateIntoTable<IClientChat>({
+          table: 'clients_chats',
+          dataDict,
+          where: { key },
+        });
+      } else {
+        await database.insertIntoTable({
+          table: 'clients_chats',
+          dataDict: {
+            client_id,
+            chat_id: id,
+            ...dataDict,
+          },
+        });
+      }
     }
   }
 }
