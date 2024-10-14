@@ -20,6 +20,8 @@ class Client {
 
   private qrInterval = 30000; // 30 segundos
 
+  private isReady = false;
+
   constructor(id: string) {
     this.id = id;
     this.wpp = new ClientWpp({
@@ -44,6 +46,7 @@ class Client {
 
   private listenEvents() {
     this.wpp.on('ready', async () => {
+      this.isReady = true;
       console.log(`Client ${this.id} ready!`);
       const chatManager = getChatManager();
       await chatManager.getChatsWpp(this);
@@ -125,6 +128,10 @@ class Client {
 
   public getWpp() {
     return this.wpp;
+  }
+
+  public getIsReady() {
+    return this.isReady;
   }
 }
 
