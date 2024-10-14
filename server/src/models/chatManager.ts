@@ -3,17 +3,65 @@ import databasePromise from '../libs/database';
 import { formatTimestamp } from '../utils/formatTimestamp';
 
 import Client from './client';
+import { getClientManager } from './clientManager';
 
 class ChatManager {
+  public async loadDataFromDatabase() {
+    try {
+      const database = await databasePromise;
+
+      const chats = await database.query<{
+        chat_id: string;
+        client_id: string;
+      }>('SELECT * FROM repo_chats LIMIT 10;');
+
+      await Promise.all(
+        chats.map(async (dt) => {
+          return await this.processChat(dt.chat_id, dt.client_id);
+        }),
+      );
+    } catch (error) {
+      console.error('Error loading chats from database:', error);
+    }
+  }
+
   public async getChatsWpp(client: Client) {
     const clientWpp = client.getWpp();
     const chats = await clientWpp.getChats();
 
     await Promise.all(
       chats.map(async (ch) => {
-        return await this.retrieveChatWpp(client, ch.id._serialized);
+        return await this.saveChat(ch.id._serialized, client.getInfo().id);
       }),
     );
+  }
+
+  private async saveChat(chat_id: string, client_id: string) {
+    const database = await databasePromise;
+
+    await database.insertIntoTable({
+      table: 'repo_chats',
+      dataDict: { chat_id, client_id },
+    });
+  }
+
+  private async processChat(chat_id: string, client_id: string) {
+    const [database, clientManager] = await Promise.all([
+      databasePromise,
+      getClientManager(),
+    ]);
+
+    const client = clientManager.getClient(client_id);
+
+    if (client && client.getIsReady()) {
+      await Promise.all([
+        this.retrieveChatWpp(client, chat_id),
+        database.deleteFromTable({
+          table: 'repo_chats',
+          where: { chat_id, client_id },
+        }),
+      ]);
+    }
   }
 
   public async retrieveChatWpp(client: Client, id: string) {
