@@ -67,13 +67,20 @@ class RepoMessageManager {
 
     const { chat_id } = messageData;
     const chatData = await clientWPP.getChatById(chat_id);
-    const contact = await clientWPP.getContactById(chat_id);
-    const profilePicUrl = await contact.getProfilePicUrl();
-    let chatName = chatData.name || '';
+    let chatName = chatData.name;
+    let profilePicUrl = null;
     const chatIsGroup = chatData.isGroup;
 
-    if (!chatIsGroup) {
-      if (contact.pushname) chatName = contact.pushname;
+    if (chat_id.length > 7) {
+      const contact = await clientWPP.getContactById(chat_id);
+      profilePicUrl = (await contact.getProfilePicUrl()) || null;
+      if (!chatIsGroup) {
+        chatName = contact.pushname;
+      }
+    }
+
+    if (!chatName) {
+      chatName = '';
     }
 
     const chat = await database.findFirst<IChat>({
