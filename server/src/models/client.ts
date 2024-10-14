@@ -3,7 +3,6 @@ import Whatsapp from 'whatsapp-web.js';
 
 import { IMessageWpp } from '../interfaces/message';
 import databasePromise from '../libs/database';
-import { delay } from '../utils/delay';
 
 import { getChatManager } from './chatManager';
 import RepoMessage from './repoMessage';
@@ -86,8 +85,7 @@ class Client {
     );
     await msg.save();
     const chatManager = getChatManager();
-    await delay(5000);
-    await chatManager.retrieveChatWpp(this, chatId);
+    await chatManager.saveChat(chatId, this.id);
   }
 
   private async saveVote(voteData: Whatsapp.PollVote) {
