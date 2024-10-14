@@ -21,7 +21,7 @@ class RepoMessageManager {
         await this.addMessage(msg);
       }
     } catch (error) {
-      console.error('Error loading clients from database:', error);
+      console.error('Error loading messages from database:', error);
     }
   }
 
