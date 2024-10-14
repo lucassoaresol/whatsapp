@@ -45,7 +45,8 @@ class Client {
   private listenEvents() {
     this.wpp.on('ready', async () => {
       console.log(`Client ${this.id} ready!`);
-      await getChatManager();
+      const chatManager = getChatManager();
+      await chatManager.getChatsWpp(this);
       console.log('Chats loaded from database.');
     });
 
@@ -81,7 +82,7 @@ class Client {
       this.id,
     );
     await msg.save();
-    const chatManager = await getChatManager();
+    const chatManager = getChatManager();
     await delay(5000);
     await chatManager.retrieveChatWpp(this, chatId);
   }
