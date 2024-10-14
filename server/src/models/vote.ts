@@ -5,6 +5,10 @@ import databasePromise from '../libs/database';
 
 import { getClientManager } from './clientManager';
 
+interface IVote {
+  id: number;
+}
+
 class Vote {
   constructor(
     private selectedName: string,
@@ -15,15 +19,17 @@ class Vote {
   public async save() {
     const database = await databasePromise;
 
-    const dataVote = await database.insertIntoTable({
+    const dataVote = (await database.insertIntoTable<IVote>({
       table: 'votes',
       dataDict: {
         selected_name: this.selectedName,
         chat_id: this.chatId,
         client_id: this.clientId,
       },
-    });
-    console.log(`Vote with ID ${dataVote} has been added.`);
+      select: { id: true },
+    })) as IVote;
+
+    console.log(`Vote with ID ${dataVote.id} has been added.`);
   }
 
   public async process() {
