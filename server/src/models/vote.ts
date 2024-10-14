@@ -62,12 +62,20 @@ class Vote {
     const database = await databasePromise;
 
     const chatData = await clientWPP.getChatById(this.chatId);
-    let chatName = chatData.name || '';
+    let chatName = chatData.name;
+    let profilePicUrl = null;
     const chatIsGroup = chatData.isGroup;
 
-    if (!chatIsGroup) {
+    if (this.chatId.length > 7) {
       const contact = await clientWPP.getContactById(this.chatId);
-      if (contact.pushname) chatName = contact.pushname;
+      profilePicUrl = (await contact.getProfilePicUrl()) || null;
+      if (!chatIsGroup) {
+        chatName = contact.pushname;
+      }
+    }
+
+    if (!chatName) {
+      chatName = '';
     }
 
     await database.insertIntoTable({
@@ -76,6 +84,7 @@ class Vote {
         id: this.chatId,
         name: chatName,
         is_group: chatIsGroup,
+        profile_pic_url: profilePicUrl,
       },
     });
   }
