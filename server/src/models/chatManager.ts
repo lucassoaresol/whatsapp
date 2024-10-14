@@ -3,22 +3,9 @@ import databasePromise from '../libs/database';
 import { formatTimestamp } from '../utils/formatTimestamp';
 
 import Client from './client';
-import { getClientManager } from './clientManager';
 
 class ChatManager {
-  public async loadDataFromDatabase() {
-    try {
-      const clientManager = await getClientManager();
-      const clients = clientManager.getClients();
-      for (const client of clients) {
-        await this.getChatsWpp(client);
-      }
-    } catch (error) {
-      console.error('Error loading chats from database:', error);
-    }
-  }
-
-  private async getChatsWpp(client: Client) {
+  public async getChatsWpp(client: Client) {
     const clientWpp = client.getWpp();
     const chats = await clientWpp.getChats();
 
@@ -121,10 +108,9 @@ class ChatManager {
 
 let instance: ChatManager | null = null;
 
-export const getChatManager = async (): Promise<ChatManager> => {
+export const getChatManager = (): ChatManager => {
   if (!instance) {
     instance = new ChatManager();
-    await instance.loadDataFromDatabase();
   }
   return instance;
 };
