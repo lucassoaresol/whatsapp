@@ -25,6 +25,7 @@ messageRouter.post('/poll', async (req: Request, res: Response) => {
   });
 
   const message = await client.sendMessage(req.body.number, poll);
+  await client.interface.openChatWindow(req.body.number);
 
   res.status(201).json(message);
 });
