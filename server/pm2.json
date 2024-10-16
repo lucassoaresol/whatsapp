@@ -3,7 +3,14 @@
     {
       "name": "whatsapp",
       "script": "pnpm",
-      "args": "start"
+      "args": "start",
+      "log_date_format": "YYYY-MM-DD HH:mm Z",
+      "error_file": "./logs/server-err.log",
+      "out_file": "./logs/server-out.log",
+      "merge_logs": true,
+      "log_type": "json",
+      "max_size": "10M",
+      "retain": 30
     }
   ]
 }

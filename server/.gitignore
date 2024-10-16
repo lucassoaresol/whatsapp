@@ -6,3 +6,4 @@ dist
 .env
 *lock*
 pg-utils.json
+logs
