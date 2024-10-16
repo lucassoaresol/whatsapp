@@ -1,5 +1,7 @@
 import { MessageId } from 'whatsapp-web.js';
 
+import { IChat } from './chat';
+
 export interface IMessageWpp {
   id: MessageId;
   fromMe: boolean;
@@ -25,12 +27,12 @@ export interface IRepoMessage {
   client_id: string;
 }
 
-export interface IMessageReturnWpp {
+export interface IMessageDetails {
   id: string;
   body: string;
   fromMe: boolean;
   date: string;
   dateDisplay: string;
   hour: string;
-  from: string | null;
+  from: IChat | null;
 }
