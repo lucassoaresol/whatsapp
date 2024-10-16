@@ -1,6 +1,7 @@
 import QRCode from 'qrcode';
 import Whatsapp from 'whatsapp-web.js';
 
+import { IChatWithMessages } from '../interfaces/chat';
 import { IMessageWpp } from '../interfaces/message';
 import databasePromise from '../libs/database';
 
@@ -134,6 +135,19 @@ class Client {
 
   public getData() {
     return { ...this.getInfo(), isReady: this.isReady };
+  }
+
+  public async getChats() {
+    const database = await databasePromise;
+
+    const chats = await database.query<IChatWithMessages>(
+      `SELECT c.id, c."name", c.is_group, c.profile_pic_url, cc.unread_count, cc."date",
+cc.date_display, cc."hour", cc.messages FROM clients_chats cc
+JOIN chats c ON cc.chat_id = c.id WHERE cc.client_id = $1 ORDER BY cc."date" DESC;`,
+      [this.id],
+    );
+
+    return { ...this.getData(), chats: chats.filter((ch) => ch.name.length > 2) };
   }
 }
 
