@@ -64,8 +64,7 @@ class ChatManager {
     }
   }
 
-  public async retrieveChatWpp(client: Client, id: string) {
-    const database = await databasePromise;
+  private async getChatData(client: Client, id: string) {
     const clientWpp = client.getWpp();
     const chat = await clientWpp.getChatById(id);
     const isGroup = chat.isGroup;
@@ -78,11 +77,31 @@ class ChatManager {
       if (!isGroup) {
         name = contact.pushname;
       }
+
+      if (!name) {
+        name = contact.name || contact.number;
+      }
     }
 
     if (!name) {
       name = '';
     }
+
+    return {
+      chat,
+      data: {
+        id,
+        name,
+        is_group: isGroup,
+        profile_pic_url: profilePicUrl,
+      },
+    };
+  }
+
+  public async retrieveChatWpp(client: Client, id: string) {
+    const database = await databasePromise;
+    const { chat, data } = await this.getChatData(client, id);
+    const { name, is_group, profile_pic_url } = data;
 
     const messages = await Promise.all(
       (await chat.fetchMessages({ limit: 5 })).reverse().map((msg) => {
@@ -91,7 +110,7 @@ class ChatManager {
           body: msg.body,
           fromMe: msg.fromMe,
           ...formatTimestamp(msg.timestamp),
-          from: msg.author || null,
+          from: is_group && !msg.fromMe && msg.id.participant ? data : null,
         };
       }),
     );
@@ -99,7 +118,7 @@ class ChatManager {
     const chatData = await database.findFirst<IChat>({ table: 'chats', where: { id } });
 
     if (chatData) {
-      if (!isGroup) {
+      if (!is_group) {
         if (chatData.name !== name) {
           await database.updateIntoTable<IChat>({
             table: 'chats',
@@ -107,10 +126,10 @@ class ChatManager {
             where: { id },
           });
         }
-        if (chatData.profile_pic_url !== profilePicUrl) {
+        if (chatData.profile_pic_url !== profile_pic_url) {
           await database.updateIntoTable<IChat>({
             table: 'chats',
-            dataDict: { profile_pic_url: profilePicUrl },
+            dataDict: { profile_pic_url },
             where: { id },
           });
         }
@@ -118,7 +137,7 @@ class ChatManager {
     } else {
       await database.insertIntoTable<IChat>({
         table: 'chats',
-        dataDict: { id, name, is_group: isGroup, profile_pic_url: profilePicUrl },
+        dataDict: data,
       });
     }
 
