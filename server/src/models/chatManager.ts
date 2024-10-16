@@ -13,7 +13,7 @@ class ChatManager {
       const chats = await database.query<{
         chat_id: string;
         client_id: string;
-      }>('SELECT * FROM repo_chats LIMIT 10;');
+      }>('SELECT DISTINCT ON (chat_id) * FROM repo_chats LIMIT 10;');
 
       await Promise.all(
         chats.map(async (dt) => {
