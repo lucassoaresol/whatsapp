@@ -49,7 +49,7 @@ class ClientManager {
   }
 
   public listClients() {
-    return Array.from(this.clients.keys());
+    return Array.from(this.clients.values()).map((client) => client.getData());
   }
 
   public getClients() {
