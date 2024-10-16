@@ -104,13 +104,21 @@ class ChatManager {
     const { name, is_group, profile_pic_url } = data;
 
     const messages = await Promise.all(
-      (await chat.fetchMessages({ limit: 5 })).reverse().map((msg) => {
+      (await chat.fetchMessages({ limit: 5 })).reverse().map(async (msg) => {
+        let from = null;
+        if (is_group && !msg.fromMe && msg.id.participant) {
+          const { data: fromData } = await this.getChatData(
+            client,
+            msg.id.participant._serialized,
+          );
+          from = fromData;
+        }
         return {
           id: msg.id._serialized,
           body: msg.body,
           fromMe: msg.fromMe,
           ...formatTimestamp(msg.timestamp),
-          from: is_group && !msg.fromMe && msg.id.participant ? data : null,
+          from,
         };
       }),
     );
