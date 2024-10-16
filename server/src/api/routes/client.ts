@@ -13,6 +13,11 @@ clientRouter.get('', (req: Request, res: Response) => {
   res.json(req.clientManager.listClients());
 });
 
+clientRouter.get('/:id', verifyClient, async (req: Request, res: Response) => {
+  const chats = await req.client.getChats();
+  res.json(chats);
+});
+
 clientRouter.get('/:id/status', verifyClient, (req: Request, res: Response) => {
   res.json(req.client.getInfo());
 });
