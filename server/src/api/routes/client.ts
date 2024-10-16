@@ -9,13 +9,13 @@ clientRouter.post('', async (req: Request, res: Response) => {
   res.status(201).json('sucess');
 });
 
-clientRouter.get('', async (req: Request, res: Response) =>
-  res.json(req.clientManager.listClients()),
-);
+clientRouter.get('', (req: Request, res: Response) => {
+  res.json(req.clientManager.listClients());
+});
 
-clientRouter.get('/:id/status', verifyClient, async (req: Request, res: Response) =>
-  res.json(req.client.getInfo()),
-);
+clientRouter.get('/:id/status', verifyClient, (req: Request, res: Response) => {
+  res.json(req.client.getInfo());
+});
 
 clientRouter.get('/:id/qr', verifyClient, async (req: Request, res: Response) => {
   const timeQR = req.client.getRemainingTimeForNextQR();
