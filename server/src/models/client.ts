@@ -17,7 +17,7 @@ class Client {
 
   private qrGeneratedAt: number | null = null;
 
-  private qrInterval = 30000; // 30 segundos
+  private qrInterval = 30000;
 
   private isReady = false;
 
@@ -130,6 +130,10 @@ class Client {
 
   public getIsReady() {
     return this.isReady;
+  }
+
+  public getData() {
+    return { ...this.getInfo(), isReady: this.isReady };
   }
 }
 
