@@ -1,6 +1,8 @@
 import { Request, Response, Router } from 'express';
 import Whatsapp from 'whatsapp-web.js';
 
+import { formatTimestamp } from '../../utils/formatTimestamp';
+
 const { Poll } = Whatsapp;
 
 const messageRouter = Router();
@@ -15,7 +17,15 @@ messageRouter.post('', async (req: Request, res: Response) => {
     mentions,
   });
 
-  res.status(201).json(message);
+  const result = {
+    id: message.id._serialized,
+    body: message.body,
+    ...formatTimestamp(message.timestamp),
+    from: null,
+    fromMe: true,
+  };
+
+  res.status(201).json(result);
 });
 
 messageRouter.post('/poll', async (req: Request, res: Response) => {
