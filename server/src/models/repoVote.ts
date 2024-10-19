@@ -2,10 +2,9 @@ import databasePromise from '../libs/database';
 
 import { getClientManager } from './clientManager';
 
-class RepoMessage {
+class RepoVote {
   constructor(
-    private isNew: boolean,
-    private msgId: string,
+    private selectedName: string,
     private chatId: string,
     private clientId: string,
     private id?: number,
@@ -13,24 +12,23 @@ class RepoMessage {
 
   public async save() {
     const database = await databasePromise;
-    const repoMessageDTO = await database.insertIntoTable({
-      table: 'repo_messages',
+    const repoVoteDTO = await database.insertIntoTable({
+      table: 'repo_votes',
       dataDict: {
-        is_new: this.isNew,
-        msg_id: this.msgId,
+        selected_name: this.selectedName,
         chat_id: this.chatId,
         client_id: this.clientId,
       },
       select: { id: true },
     });
-    const repoMessageData = repoMessageDTO as { id: number };
-    this.id = repoMessageData.id;
+    const repoVote = repoVoteDTO as { id: number };
+    this.id = repoVote.id;
   }
 
   public async destroy() {
     const database = await databasePromise;
 
-    await database.deleteFromTable({ table: 'repo_messages', where: { id: this.id! } });
+    await database.deleteFromTable({ table: 'repo_votes', where: { id: this.id! } });
   }
 
   public async getClientWPP() {
@@ -41,15 +39,6 @@ class RepoMessage {
       if (clientWPP.info) return clientWPP;
     }
   }
-
-  public getData() {
-    return {
-      msgId: this.msgId,
-      chatId: this.chatId,
-      clientId: this.clientId,
-      isNew: this.isNew,
-    };
-  }
 }
 
-export default RepoMessage;
+export default RepoVote;

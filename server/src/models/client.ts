@@ -2,12 +2,11 @@ import QRCode from 'qrcode';
 import Whatsapp from 'whatsapp-web.js';
 
 import { IChatWithMessages } from '../interfaces/chat';
-import { IMessageWpp } from '../interfaces/message';
 import databasePromise from '../libs/database';
 
-import { getChatManager } from './chatManager';
+import RepoChat from './repoChat';
 import RepoMessage from './repoMessage';
-import Vote from './vote';
+import RepoVote from './repoVote';
 
 const { Client: ClientWpp, LocalAuth } = Whatsapp;
 
@@ -48,14 +47,13 @@ class Client {
     this.wpp.on('ready', async () => {
       this.isReady = true;
       console.log(`Client ${this.id} ready!`);
-      const chatManager = getChatManager();
-      await chatManager.getChatsWpp(this);
+      await this.loadChats();
       console.log('Chats loaded from database.');
     });
 
     this.wpp.on('qr', async (qr) => {
       this.qrGeneratedAt = Date.now();
-      await QRCode.toFile(`public/${this.id}_qr.png`, qr);
+      await QRCode.toFile(`public/qr/${this.id}_qr.png`, qr);
     });
 
     this.wpp.on('authenticated', () => console.log(`Client ${this.id} authenticated`));
@@ -73,29 +71,36 @@ class Client {
     this.wpp.on('vote_update', async (vote) => await this.saveVote(vote));
   }
 
-  private async saveMessage(messageData: IMessageWpp) {
+  private async loadChats() {
+    const clientWpp = this.getWpp();
+    const chats = await clientWpp.getChats();
+
+    await Promise.all([
+      chats.map(async (ch) => {
+        const chat = new RepoChat(true, ch.id._serialized, this.id);
+        return await chat.save();
+      }),
+    ]);
+  }
+
+  private async saveMessage(messageData: Whatsapp.Message) {
     const chatId = messageData.id.remote;
     const msgId = messageData.id._serialized;
 
-    const msg = new RepoMessage(
-      msgId,
-      messageData,
-      messageData.fromMe,
-      chatId,
-      this.id,
-    );
-    await msg.save();
-    const chatManager = getChatManager();
-    await chatManager.saveChat(chatId, this.id);
+    const chat = new RepoChat(false, chatId, this.id);
+    const msg = new RepoMessage(true, msgId, chatId, this.id);
+
+    await Promise.all([chat.save(), msg.save()]);
   }
 
   private async saveVote(voteData: Whatsapp.PollVote) {
-    const vote = new Vote(
-      voteData.selectedOptions.at(0)?.name || '',
-      voteData.voter,
-      this.id,
-    );
-    await vote.process();
+    const selectedName = voteData.selectedOptions.at(0)?.name || '';
+    const chatId = voteData.voter;
+
+    const chat = new RepoChat(false, chatId, this.id);
+    const vote = new RepoVote(selectedName, chatId, this.id);
+
+    await Promise.all([chat.save(), vote.save()]);
   }
 
   public getRemainingTimeForNextQR(): number {
