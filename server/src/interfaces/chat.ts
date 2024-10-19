@@ -1,10 +1,10 @@
-import { IMessageDetails } from './message';
-
 export interface IChat {
   id: string;
   name: string;
   is_group: boolean;
-  profile_pic_url: string | null;
+  profile_pic_url?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface IChatWithClient extends IChat {
@@ -15,6 +15,7 @@ export interface IClientChat {
   key: number;
   client_id: string;
   chat_id: string;
+  unread_count: number;
 }
 
 export interface IChatWithMessages extends IChat {
@@ -22,5 +23,11 @@ export interface IChatWithMessages extends IChat {
   date: string;
   date_display: string;
   hour: string;
-  messages: IMessageDetails[];
+}
+
+export interface IRepoChat {
+  id: number;
+  is_sync: boolean;
+  chat_id: string;
+  client_id: string;
 }

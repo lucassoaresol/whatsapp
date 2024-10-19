@@ -1,38 +1,19 @@
-import { MessageId } from 'whatsapp-web.js';
-
-import { IChat } from './chat';
-
-export interface IMessageWpp {
-  id: MessageId;
-  fromMe: boolean;
-  timestamp: number;
-}
-
 export interface IMessage {
   id: string;
-  data: IMessageWpp;
+  body: string;
   from_me: boolean;
   is_new: boolean;
+  mime_types?: string;
   created_at: Date;
-  chat_id: string;
-  client_id: string;
+  chat_id: number;
+  from_id?: string;
+  image_id?: number;
 }
 
 export interface IRepoMessage {
   id: number;
+  is_new: boolean;
   msg_id: string;
-  data: any;
-  from_me: boolean;
   chat_id: string;
   client_id: string;
-}
-
-export interface IMessageDetails {
-  id: string;
-  body: string;
-  fromMe: boolean;
-  date: string;
-  dateDisplay: string;
-  hour: string;
-  from: IChat | null;
 }
