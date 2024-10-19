@@ -20,6 +20,7 @@
     "dayjs": "1.11.13",
     "dotenv": "16.4.5",
     "express": "4.21.1",
+    "mime-types": "^2.1.35",
     "pg-utils": "github:lucassoaresol/pg-utils",
     "qrcode": "1.5.4",
     "whatsapp-web.js": "github:lucassoaresol/whatsapp-web.js",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@types/cors": "2.8.17",
     "@types/express": "^5.0.0",
+    "@types/mime-types": "^2.1.4",
     "@types/qrcode": "1.5.5",
     "@typescript-eslint/eslint-plugin": "8.6.0",
     "@typescript-eslint/parser": "8.6.0",
