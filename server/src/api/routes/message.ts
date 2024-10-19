@@ -1,7 +1,8 @@
 import { Request, Response, Router } from 'express';
 import Whatsapp from 'whatsapp-web.js';
 
-import { formatTimestamp } from '../../utils/formatTimestamp';
+import dayLib from '../../libs/dayjs';
+import { formatDate } from '../../utils/formatDate';
 
 const { Poll } = Whatsapp;
 
@@ -17,12 +18,14 @@ messageRouter.post('', async (req: Request, res: Response) => {
     mentions,
   });
 
+  const created_at = dayLib(message.timestamp * 1000).format('YYYY-MM-DD HH:mm:ss.SSS');
+
   const result = {
     id: message.id._serialized,
     body: message.body,
-    ...formatTimestamp(message.timestamp),
-    from: null,
-    fromMe: true,
+    from_me: true,
+    created_at,
+    ...formatDate(created_at),
   };
 
   res.status(201).json(result);

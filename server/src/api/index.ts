@@ -12,7 +12,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use('/static', express.static('public'));
 
 app.use(async (req, res, next) => {
   const clientManager = await getClientManager();
