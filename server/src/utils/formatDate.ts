@@ -1,7 +1,7 @@
 import dayLib from '../libs/dayjs';
 
-export function formatTimestamp(timestamp: number) {
-  const dateDay = dayLib(timestamp * 1000);
+export function formatDate(date: string) {
+  const dateDay = dayLib(date);
   const today = dayLib().startOf('day');
   const dateOnly = dateDay.startOf('day');
 
@@ -21,7 +21,6 @@ export function formatTimestamp(timestamp: number) {
   }
 
   return {
-    date: dateDay.format('YYYY-MM-DD HH:mm:ss.SSS'),
     date_display: dateDisplay,
     hour: dateDay.format('HH:mm'),
   };
