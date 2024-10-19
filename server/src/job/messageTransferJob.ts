@@ -31,7 +31,6 @@ CronJob.from({
     try {
       const repoMessage = new RepoMessageManager();
       await repoMessage.loadDataFromDatabase();
-      await repoMessage.transferMessage();
       console.log(
         `[INFO - ${now.format('YYYY-MM-DD HH:mm:ss')}] [${jobName}] Mensagens transferidas com sucesso.`,
       );

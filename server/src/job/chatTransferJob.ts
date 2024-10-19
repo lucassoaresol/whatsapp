@@ -2,7 +2,7 @@ import { CronJob } from 'cron';
 import { Dayjs } from 'dayjs';
 
 import dayLib from '../libs/dayjs';
-import { getChatManager } from '../models/chatManager';
+import RepoChatManager from '../models/repoChatManager';
 
 let isRunning = false;
 let lastLogTime: Dayjs | null = null;
@@ -29,7 +29,7 @@ CronJob.from({
     );
 
     try {
-      const chatManager = getChatManager();
+      const chatManager = new RepoChatManager();
       await chatManager.loadDataFromDatabase();
       console.info(
         `[INFO - ${now.format('YYYY-MM-DD HH:mm:ss')}] [${jobName}] Dados carregados com sucesso.`,
