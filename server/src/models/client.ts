@@ -1,5 +1,5 @@
 import QRCode from 'qrcode';
-import Whatsapp from 'whatsapp-web.js';
+import Whatsapp, { MessageId } from 'whatsapp-web.js';
 
 import { IChatWithMessages } from '../interfaces/chat';
 import { IClient } from '../interfaces/client';
@@ -49,8 +49,11 @@ class Client {
     this.wpp.on('ready', async () => {
       this.isReady = true;
       console.log(`Client ${this.id} ready!`);
-      await this.loadChats();
-      console.log('Chats loaded from database.');
+      const data = await this.getData();
+      if (!data.isSync) {
+        await this.loadChats();
+        console.log('Chats loaded from database.');
+      }
     });
 
     this.wpp.on('qr', async (qr) => {
@@ -73,11 +76,15 @@ class Client {
 
     this.wpp.on('message_edit', async (message) => await this.saveMessage(message, 4));
 
-    this.wpp.on('message_revoke_everyone', async (message, revoked_msg) => {
+    this.wpp.on('message_revoke_everyone', async (message) => {
       await this.saveMessage(message, 5);
-      if (revoked_msg) {
-        this.saveMessage(message, 7);
-      }
+      const revoked_msg = message as unknown as {
+        _data: { protocolMessageKey: MessageId };
+      };
+      await this.saveMessage(
+        { ...message, id: revoked_msg._data.protocolMessageKey },
+        7,
+      );
     });
 
     this.wpp.on('vote_update', async (vote) => await this.saveVote(vote));

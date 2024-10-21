@@ -23,12 +23,21 @@ class Message {
   constructor(private repoMessage: RepoMessage) {}
 
   private async getMessageData() {
+    const database = await databasePromise;
+    const dataRepo = this.repoMessage.getData();
     let isValid = false;
-    if (this.statusId === 7) {
-      const database = await databasePromise;
-      await database.deleteFromTable({ table: 'messages', where: { id: this.id } });
-    } else {
-      const dataRepo = this.repoMessage.getData();
+
+    const dataMsg = await database.findFirst<IMessage>({
+      table: 'messages',
+      where: { id: dataRepo.msgId },
+      select: { id: true, media_id: true },
+    });
+
+    if (dataRepo.statusId === 7 && dataMsg) {
+      this.id = dataMsg.id;
+      this.mediaId = dataMsg.media_id;
+      await this.destroy();
+    } else if (!dataMsg) {
       const clientWpp = await this.repoMessage.getClientWPP();
       if (clientWpp) {
         const today = dayLib();
@@ -75,7 +84,7 @@ class Message {
             await chatFrom.save();
           }
 
-          if (msg.hasMedia) {
+          if (msg.hasMedia && this.statusId !== 5) {
             const media = await msg.downloadMedia();
             const mimeType = media.mimetype;
             const extension = mime.extension(mimeType);

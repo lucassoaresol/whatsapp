@@ -12,7 +12,7 @@ class RepoChatManager {
       const database = await databasePromise;
 
       const chats = await database.query<IRepoChat>(
-        'SELECT * FROM repo_chats LIMIT 10;',
+        'SELECT DISTINCT ON (chat_id) * FROM repo_chats LIMIT 10;',
       );
 
       await Promise.all(chats.map(async (ch) => await this.addChat(ch)));

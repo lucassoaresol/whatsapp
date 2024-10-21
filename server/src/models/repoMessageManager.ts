@@ -12,7 +12,7 @@ class RepoMessageManager {
       const database = await databasePromise;
 
       const messages = await database.query<IRepoMessage>(
-        'SELECT * FROM repo_messages ORDER BY created_at DESC LIMIT 10;',
+        'SELECT DISTINCT ON (msg_id) * FROM repo_messages ORDER BY msg_id, created_at DESC LIMIT 10;',
       );
 
       await Promise.all(messages.map(async (msg) => await this.addMessage(msg)));
