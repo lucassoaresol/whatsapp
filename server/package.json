@@ -23,7 +23,7 @@
     "mime-types": "^2.1.35",
     "pg-utils": "github:lucassoaresol/pg-utils",
     "qrcode": "1.5.4",
-    "whatsapp-web.js": "github:lucassoaresol/whatsapp-web.js",
+    "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js",
     "zod": "3.23.8"
   },
   "devDependencies": {
