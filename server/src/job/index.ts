@@ -1,3 +1,2 @@
-import './chatTransferJob';
 import './cleanupOldDataJob';
-import './messageTransferJob';
+import './transferData';

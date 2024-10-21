@@ -3,10 +3,11 @@ import { Dayjs } from 'dayjs';
 
 import dayLib from '../libs/dayjs';
 import RepoChatManager from '../models/repoChatManager';
+import RepoMessageManager from '../models/repoMessageManager';
 
 let isRunning = false;
 let lastLogTime: Dayjs | null = null;
-const jobName = 'CarregarDadosChatManager';
+const jobName = 'CarregarDados';
 
 CronJob.from({
   cronTime: '*/3 * * * * *',
@@ -30,7 +31,12 @@ CronJob.from({
 
     try {
       const chatManager = new RepoChatManager();
-      await chatManager.loadDataFromDatabase();
+      const repoMessage = new RepoMessageManager();
+
+      await Promise.all([
+        chatManager.loadDataFromDatabase(),
+        repoMessage.loadDataFromDatabase(),
+      ]);
       console.info(
         `[INFO - ${now.format('YYYY-MM-DD HH:mm:ss')}] [${jobName}] Dados carregados com sucesso.`,
       );
