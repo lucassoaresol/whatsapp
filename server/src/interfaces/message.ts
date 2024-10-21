@@ -2,17 +2,17 @@ export interface IMessage {
   id: string;
   body: string;
   from_me: boolean;
-  is_new: boolean;
-  mime_types?: string;
-  created_at: Date;
+  status_id: number;
   chat_id: number;
   from_id?: string;
-  image_id?: number;
+  media_id?: number;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export interface IRepoMessage {
   id: number;
-  is_new: boolean;
+  status_id: number;
   msg_id: string;
   chat_id: string;
   client_id: string;
