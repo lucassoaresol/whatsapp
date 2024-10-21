@@ -70,7 +70,6 @@ class RepoChat {
   }
 
   public async saveClientChat() {
-    let key = 0;
     const [clientWpp, database] = await Promise.all([
       this.getClientWPP(),
       databasePromise,
@@ -85,15 +84,13 @@ class RepoChat {
       });
 
       if (clientChat) {
-        key = clientChat.key;
-
         await database.updateIntoTable<IClientChat>({
           table: 'clients_chats',
           dataDict: { unread_count: chat.unreadCount },
-          where: { key },
+          where: { key: clientChat.key },
         });
       } else {
-        const clientChatDTO = await database.insertIntoTable({
+        await database.insertIntoTable({
           table: 'clients_chats',
           dataDict: {
             client_id: this.clientId,
@@ -102,11 +99,8 @@ class RepoChat {
           },
           select: { key: true },
         });
-        const clientChatData = clientChatDTO as { key: number };
-        key = clientChatData.key;
       }
     }
-    return key;
   }
 
   public getData() {
