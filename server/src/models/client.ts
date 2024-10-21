@@ -73,10 +73,12 @@ class Client {
 
     this.wpp.on('message_edit', async (message) => await this.saveMessage(message, 4));
 
-    this.wpp.on(
-      'message_revoke_everyone',
-      async (message) => await this.saveMessage(message, 5),
-    );
+    this.wpp.on('message_revoke_everyone', async (message, revoked_msg) => {
+      await this.saveMessage(message, 5);
+      if (revoked_msg) {
+        this.saveMessage(message, 7);
+      }
+    });
 
     this.wpp.on('vote_update', async (vote) => await this.saveVote(vote));
   }
