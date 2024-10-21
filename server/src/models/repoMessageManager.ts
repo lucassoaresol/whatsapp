@@ -31,7 +31,11 @@ class RepoMessageManager {
 
     const message = new Message(repoMessage);
 
-    await Promise.all([message.save(), repoMessage.destroy()]);
+    const isSaved = await message.save();
+
+    if (isSaved) {
+      await repoMessage.destroy();
+    }
 
     this.messages.set(msg_id, message);
     console.log(`Message with ID ${msg_id} has been added.`);

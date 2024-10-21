@@ -1,5 +1,6 @@
 import mime from 'mime-types';
 
+import { IClientChat } from '../interfaces/chat';
 import { IMedia } from '../interfaces/media';
 import { IMessage } from '../interfaces/message';
 import databasePromise from '../libs/database';
@@ -11,6 +12,9 @@ import RepoChat from './repoChat';
 import RepoMessage from './repoMessage';
 
 class Message {
+  private isValid = false;
+  private isSaved = false;
+
   private id!: string;
   private body!: string;
   private fromMe!: boolean;
@@ -25,7 +29,6 @@ class Message {
   private async getMessageData() {
     const database = await databasePromise;
     const dataRepo = this.repoMessage.getData();
-    let isValid = false;
 
     const dataMsg = await database.findFirst<IMessage>({
       table: 'messages',
@@ -37,6 +40,7 @@ class Message {
       this.id = dataMsg.id;
       this.mediaId = dataMsg.media_id;
       await this.destroy();
+      this.isSaved = true;
     } else if (!dataMsg) {
       const clientWpp = await this.repoMessage.getClientWPP();
       if (clientWpp) {
@@ -49,7 +53,6 @@ class Message {
           'YYYY-MM-DD HH:mm:ss.SSS',
         );
         if (timestamp !== 'Invalid Date') {
-          isValid = true;
           this.id = dataRepo.msgId;
           this.body = msg.body;
           this.fromMe = msg.fromMe;
@@ -67,48 +70,54 @@ class Message {
             this.statusId = dataRepo.statusId;
           }
 
-          const repoChat = new RepoChat(false, dataRepo.chatId, dataRepo.clientId);
+          const chatData = await database.findFirst<IClientChat>({
+            table: 'clients_chats',
+            where: { client_id: dataRepo.clientId, chat_id: dataRepo.chatId },
+            select: { key: true },
+          });
 
-          const chatData = new Chat(repoChat);
+          if (chatData) {
+            this.isValid = true;
+            this.chatId = chatData.key;
 
-          await chatData.save();
-          this.chatId = await repoChat.saveClientChat();
+            if (chat.isGroup && !msg.fromMe) {
+              const from = await msg.getContact();
+              this.fromId = from.id._serialized;
+              const repoChatFrom = new RepoChat(false, this.fromId, dataRepo.clientId);
 
-          if (chat.isGroup && !msg.fromMe) {
-            const from = await msg.getContact();
-            this.fromId = from.id._serialized;
-            const repoChatFrom = new RepoChat(false, this.fromId, dataRepo.clientId);
+              const chatFrom = new Chat(repoChatFrom);
 
-            const chatFrom = new Chat(repoChatFrom);
+              await chatFrom.save();
+            }
 
-            await chatFrom.save();
-          }
-
-          if (msg.hasMedia && this.statusId !== 5) {
-            const media = await msg.downloadMedia();
-            const mimeType = media.mimetype;
-            const extension = mime.extension(mimeType);
-            const fileName = `${dataRepo.clientId}_${Date.now()}.${extension}`;
-            const path = `media/${fileName}`;
-            const mediaData = new Media(mimeType, media.data, path);
-            this.mediaId = await mediaData.save();
-            if (today.diff(timestamp, 'd') < 6) {
-              await mediaData.down();
+            if (msg.hasMedia) {
+              const media = await msg.downloadMedia();
+              if (media) {
+                const mimeType = media.mimetype;
+                const extension = mime.extension(mimeType);
+                const fileName = `${dataRepo.clientId}_${Date.now()}.${extension}`;
+                const path = `media/${fileName}`;
+                const mediaData = new Media(mimeType, media.data, path);
+                this.mediaId = await mediaData.save();
+                if (today.diff(timestamp, 'd') < 6) {
+                  await mediaData.down();
+                }
+              } else {
+                this.statusId = 8;
+              }
             }
           }
+        } else {
+          this.isSaved = true;
         }
       }
     }
-    return isValid;
   }
 
   public async save() {
-    const [database, isValid] = await Promise.all([
-      databasePromise,
-      this.getMessageData(),
-    ]);
+    const [database] = await Promise.all([databasePromise, this.getMessageData()]);
 
-    if (isValid) {
+    if (this.isValid) {
       const msgData = await database.findFirst<IMessage>({
         table: 'messages',
         where: { id: this.id },
@@ -138,7 +147,9 @@ class Message {
           },
         });
       }
+      this.isSaved = true;
     }
+    return this.isSaved;
   }
 
   public async destroy() {
