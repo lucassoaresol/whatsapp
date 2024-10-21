@@ -24,59 +24,68 @@ class Message {
 
   private async getMessageData() {
     let isValid = false;
-    const dataRepo = this.repoMessage.getData();
-    const clientWpp = await this.repoMessage.getClientWPP();
-    if (clientWpp) {
-      const today = dayLib();
-      const [chat, msg] = await Promise.all([
-        clientWpp.getChatById(dataRepo.chatId),
-        clientWpp.getMessageById(dataRepo.msgId),
-      ]);
-      const timestamp = dayLib(msg.timestamp * 1000).format('YYYY-MM-DD HH:mm:ss.SSS');
-      if (timestamp !== 'Invalid Date') {
-        isValid = true;
-        this.id = dataRepo.msgId;
-        this.body = msg.body;
-        this.fromMe = msg.fromMe;
-        this.createdAt = timestamp;
+    if (this.statusId === 7) {
+      const database = await databasePromise;
+      await database.deleteFromTable({ table: 'messages', where: { id: this.id } });
+    } else {
+      const dataRepo = this.repoMessage.getData();
+      const clientWpp = await this.repoMessage.getClientWPP();
+      if (clientWpp) {
+        const today = dayLib();
+        const [chat, msg] = await Promise.all([
+          clientWpp.getChatById(dataRepo.chatId),
+          clientWpp.getMessageById(dataRepo.msgId),
+        ]);
+        const timestamp = dayLib(msg.timestamp * 1000).format(
+          'YYYY-MM-DD HH:mm:ss.SSS',
+        );
+        if (timestamp !== 'Invalid Date') {
+          isValid = true;
+          this.id = dataRepo.msgId;
+          this.body = msg.body;
+          this.fromMe = msg.fromMe;
+          this.createdAt = timestamp;
 
-        if (dataRepo.statusId === 6) {
-          if (msg.latestEditMsgKey) {
-            this.statusId = 4;
+          if (dataRepo.statusId === 6) {
+            if (msg.latestEditMsgKey) {
+              this.statusId = 4;
+            } else if (msg.type === 'revoked') {
+              this.statusId = 5;
+            } else {
+              this.statusId = 3;
+            }
           } else {
-            this.statusId = 3;
+            this.statusId = dataRepo.statusId;
           }
-        } else {
-          this.statusId = dataRepo.statusId;
-        }
 
-        const repoChat = new RepoChat(false, dataRepo.chatId, dataRepo.clientId);
+          const repoChat = new RepoChat(false, dataRepo.chatId, dataRepo.clientId);
 
-        const chatData = new Chat(repoChat);
+          const chatData = new Chat(repoChat);
 
-        await chatData.save();
-        this.chatId = await repoChat.saveClientChat();
+          await chatData.save();
+          this.chatId = await repoChat.saveClientChat();
 
-        if (chat.isGroup && !msg.fromMe) {
-          const from = await msg.getContact();
-          this.fromId = from.id._serialized;
-          const repoChatFrom = new RepoChat(false, this.fromId, dataRepo.clientId);
+          if (chat.isGroup && !msg.fromMe) {
+            const from = await msg.getContact();
+            this.fromId = from.id._serialized;
+            const repoChatFrom = new RepoChat(false, this.fromId, dataRepo.clientId);
 
-          const chatFrom = new Chat(repoChatFrom);
+            const chatFrom = new Chat(repoChatFrom);
 
-          await chatFrom.save();
-        }
+            await chatFrom.save();
+          }
 
-        if (msg.hasMedia) {
-          const media = await msg.downloadMedia();
-          const mimeType = media.mimetype;
-          const extension = mime.extension(mimeType);
-          const fileName = `${dataRepo.clientId}_${Date.now()}.${extension}`;
-          const path = `media/${fileName}`;
-          const mediaData = new Media(mimeType, media.data, path);
-          this.mediaId = await mediaData.save();
-          if (today.diff(timestamp, 'd') < 6) {
-            await mediaData.down();
+          if (msg.hasMedia) {
+            const media = await msg.downloadMedia();
+            const mimeType = media.mimetype;
+            const extension = mime.extension(mimeType);
+            const fileName = `${dataRepo.clientId}_${Date.now()}.${extension}`;
+            const path = `media/${fileName}`;
+            const mediaData = new Media(mimeType, media.data, path);
+            this.mediaId = await mediaData.save();
+            if (today.diff(timestamp, 'd') < 6) {
+              await mediaData.down();
+            }
           }
         }
       }
