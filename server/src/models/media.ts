@@ -56,9 +56,8 @@ class Media {
       if (err) {
         console.error(`Erro ao deletar o arquivo ${fileName}:`, err);
       } else {
-        await database.updateIntoTable({
+        await database.deleteFromTable({
           table: 'medias',
-          dataDict: { is_down: true },
           where: { id: this.id },
         });
         console.log(`Arquivo deletado: ${fileName}`);

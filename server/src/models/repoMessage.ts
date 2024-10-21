@@ -4,7 +4,7 @@ import { getClientManager } from './clientManager';
 
 class RepoMessage {
   constructor(
-    private isNew: boolean,
+    private statusId: number,
     private msgId: string,
     private chatId: string,
     private clientId: string,
@@ -16,7 +16,7 @@ class RepoMessage {
     const repoMessageDTO = await database.insertIntoTable({
       table: 'repo_messages',
       dataDict: {
-        is_new: this.isNew,
+        status_id: this.statusId,
         msg_id: this.msgId,
         chat_id: this.chatId,
         client_id: this.clientId,
@@ -44,10 +44,10 @@ class RepoMessage {
 
   public getData() {
     return {
+      statusId: this.statusId,
       msgId: this.msgId,
       chatId: this.chatId,
       clientId: this.clientId,
-      isNew: this.isNew,
     };
   }
 }

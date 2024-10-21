@@ -52,7 +52,7 @@ class RepoChat {
     });
 
     if (!msgData) {
-      const repo = new RepoMessage(false, msgId, this.chatId, this.clientId);
+      const repo = new RepoMessage(6, msgId, this.chatId, this.clientId);
       await repo.save();
     }
   }
@@ -64,9 +64,7 @@ class RepoChat {
       const messages = await chat.fetchMessages({ limit: 50 });
 
       await Promise.all(
-        messages.map(async (msg) => {
-          return await this.processSync(msg.id._serialized);
-        }),
+        messages.map(async (msg) => await this.processSync(msg.id._serialized)),
       );
     }
   }

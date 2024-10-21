@@ -15,23 +15,19 @@ class RepoMessageManager {
         'SELECT * FROM repo_messages ORDER BY created_at DESC LIMIT 10;',
       );
 
-      await Promise.all(
-        messages.map(async (msg) => {
-          return await this.addMessage(msg);
-        }),
-      );
+      await Promise.all(messages.map(async (msg) => await this.addMessage(msg)));
     } catch (error) {
       console.error('Error loading messages from database:', error);
     }
   }
 
-  public async addMessage({ chat_id, client_id, id, is_new, msg_id }: IRepoMessage) {
+  public async addMessage({ chat_id, client_id, id, msg_id, status_id }: IRepoMessage) {
     if (this.messages.has(msg_id)) {
       console.log(`Message with ID ${msg_id} already exists.`);
       return;
     }
 
-    const repoMessage = new RepoMessage(is_new, msg_id, chat_id, client_id, id);
+    const repoMessage = new RepoMessage(status_id, msg_id, chat_id, client_id, id);
 
     const message = new Message(repoMessage);
 

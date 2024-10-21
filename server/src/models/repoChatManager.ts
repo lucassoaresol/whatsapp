@@ -15,11 +15,7 @@ class RepoChatManager {
         'SELECT * FROM repo_chats LIMIT 10;',
       );
 
-      await Promise.all(
-        chats.map(async (ch) => {
-          return await this.addChat(ch);
-        }),
-      );
+      await Promise.all(chats.map(async (ch) => await this.addChat(ch)));
     } catch (error) {
       console.error('Error loading chats from database:', error);
     }

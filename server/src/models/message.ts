@@ -1,5 +1,7 @@
 import mime from 'mime-types';
 
+import { IMedia } from '../interfaces/media';
+import { IMessage } from '../interfaces/message';
 import databasePromise from '../libs/database';
 import dayLib from '../libs/dayjs';
 
@@ -12,11 +14,11 @@ class Message {
   private id!: string;
   private body!: string;
   private fromMe!: boolean;
-  private isNew?: boolean;
-  private createdAt!: string;
+  private statusId!: number;
   private chatId!: number;
   private fromId?: string;
   private mediaId?: number;
+  private createdAt!: string;
 
   constructor(private repoMessage: RepoMessage) {}
 
@@ -36,8 +38,17 @@ class Message {
         this.id = dataRepo.msgId;
         this.body = msg.body;
         this.fromMe = msg.fromMe;
-        this.isNew = dataRepo.isNew;
         this.createdAt = timestamp;
+
+        if (dataRepo.statusId === 6) {
+          if (msg.latestEditMsgKey) {
+            this.statusId = 4;
+          } else {
+            this.statusId = 3;
+          }
+        } else {
+          this.statusId = dataRepo.statusId;
+        }
 
         const repoChat = new RepoChat(false, dataRepo.chatId, dataRepo.clientId);
 
@@ -46,8 +57,9 @@ class Message {
         await chatData.save();
         this.chatId = await repoChat.saveClientChat();
 
-        if (chat.isGroup && !msg.fromMe && msg.id.participant) {
-          this.fromId = msg.id.participant._serialized;
+        if (chat.isGroup && !msg.fromMe) {
+          const from = await msg.getContact();
+          this.fromId = from.id._serialized;
           const repoChatFrom = new RepoChat(false, this.fromId, dataRepo.clientId);
 
           const chatFrom = new Chat(repoChatFrom);
@@ -79,19 +91,58 @@ class Message {
     ]);
 
     if (isValid) {
-      await database.insertIntoTable({
+      const msgData = await database.findFirst<IMessage>({
         table: 'messages',
-        dataDict: {
-          id: this.id,
-          body: this.body,
-          from_me: this.fromMe,
-          is_new: this.isNew,
-          created_at: this.createdAt,
-          chat_id: this.chatId,
-          from_id: this.fromId,
-          media_id: this.mediaId,
-        },
+        where: { id: this.id },
+        select: { status_id: true },
       });
+
+      if (msgData) {
+        if (msgData.status_id !== this.statusId) {
+          await database.updateIntoTable({
+            table: 'messages',
+            dataDict: { status_id: this.statusId, body: this.body },
+            where: { id: this.id },
+          });
+        }
+      } else {
+        await database.insertIntoTable({
+          table: 'messages',
+          dataDict: {
+            id: this.id,
+            body: this.body,
+            from_me: this.fromMe,
+            status_id: this.statusId,
+            chat_id: this.chatId,
+            from_id: this.fromId,
+            media_id: this.mediaId,
+            created_at: this.createdAt,
+          },
+        });
+      }
+    }
+  }
+
+  public async destroy() {
+    const database = await databasePromise;
+    if (this.mediaId) {
+      const mediaData = await database.findFirst<IMedia>({
+        table: 'medias',
+        where: { id: this.mediaId },
+      });
+
+      if (mediaData) {
+        const media = new Media(
+          mediaData.mime_type,
+          mediaData.data,
+          mediaData.path,
+          this.mediaId,
+        );
+
+        await media.destroy();
+      }
+    } else {
+      await database.deleteFromTable({ table: 'messages', where: { id: this.id } });
     }
   }
 }

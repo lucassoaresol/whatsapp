@@ -2,7 +2,9 @@ import QRCode from 'qrcode';
 import Whatsapp from 'whatsapp-web.js';
 
 import { IChatWithMessages } from '../interfaces/chat';
+import { IClient } from '../interfaces/client';
 import databasePromise from '../libs/database';
+import dayLib from '../libs/dayjs';
 
 import RepoChat from './repoChat';
 import RepoMessage from './repoMessage';
@@ -58,22 +60,33 @@ class Client {
 
     this.wpp.on('authenticated', () => console.log(`Client ${this.id} authenticated`));
 
-    this.wpp.on('auth_failure', () => {});
-
     this.wpp.on('disconnected', (reason) =>
       console.log(`Client ${this.id} was logged out`, reason),
     );
 
-    this.wpp.on('message', async (message) => await this.saveMessage(message));
+    this.wpp.on('message', async (message) => await this.saveMessage(message, 2));
 
-    this.wpp.on('message_create', async (message) => await this.saveMessage(message));
+    this.wpp.on(
+      'message_create',
+      async (message) => await this.saveMessage(message, 1),
+    );
+
+    this.wpp.on('message_edit', async (message) => await this.saveMessage(message, 4));
+
+    this.wpp.on(
+      'message_revoke_everyone',
+      async (message) => await this.saveMessage(message, 5),
+    );
 
     this.wpp.on('vote_update', async (vote) => await this.saveVote(vote));
   }
 
-  private async loadChats() {
+  public async loadChats() {
     const clientWpp = this.getWpp();
-    const chats = await clientWpp.getChats();
+    const [chats, database] = await Promise.all([
+      clientWpp.getChats(),
+      databasePromise,
+    ]);
 
     await Promise.all([
       chats.map(async (ch) => {
@@ -81,14 +94,20 @@ class Client {
         return await chat.save();
       }),
     ]);
+
+    await database.updateIntoTable({
+      table: 'clients',
+      dataDict: { last_sync_at: dayLib().format('YYYY-MM-DD HH:mm:ss.SSS') },
+      where: { id: this.id },
+    });
   }
 
-  private async saveMessage(messageData: Whatsapp.Message) {
+  private async saveMessage(messageData: Whatsapp.Message, statusId: number) {
     const chatId = messageData.id.remote;
     const msgId = messageData.id._serialized;
 
     const chat = new RepoChat(false, chatId, this.id);
-    const msg = new RepoMessage(true, msgId, chatId, this.id);
+    const msg = new RepoMessage(statusId, msgId, chatId, this.id);
 
     await Promise.all([chat.save(), msg.save()]);
   }
@@ -138,8 +157,22 @@ class Client {
     return this.isReady;
   }
 
-  public getData() {
-    return { ...this.getInfo(), isReady: this.isReady };
+  public async getData() {
+    let isSync = false;
+
+    const database = await databasePromise;
+
+    const data = await database.findFirst<IClient>({
+      table: 'clients',
+      where: { id: this.id },
+      select: { last_sync_at: true },
+    });
+
+    if (data?.last_sync_at && dayLib().diff(data.last_sync_at, 'day') === 0) {
+      isSync = true;
+    }
+
+    return { ...this.getInfo(), isReady: this.isReady, isSync };
   }
 
   public async getChats() {

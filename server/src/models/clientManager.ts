@@ -48,8 +48,11 @@ class ClientManager {
     }
   }
 
-  public listClients() {
-    return Array.from(this.clients.values()).map((client) => client.getData());
+  public async listClients() {
+    const clientsDataPromises = Array.from(this.clients.values()).map(
+      async (client) => await client.getData(),
+    );
+    return await Promise.all(clientsDataPromises);
   }
 
   public getClients() {
