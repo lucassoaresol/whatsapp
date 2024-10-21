@@ -1,10 +1,10 @@
 import QRCode from 'qrcode';
 import Whatsapp, { MessageId } from 'whatsapp-web.js';
 
-import { IChatWithMessages } from '../interfaces/chat';
 import { IClient } from '../interfaces/client';
 import databasePromise from '../libs/database';
 import dayLib from '../libs/dayjs';
+import { listChatByClientId } from '../utils/listChatByClientId';
 
 import RepoChat from './repoChat';
 import RepoMessage from './repoMessage';
@@ -22,6 +22,8 @@ class Client {
   private qrInterval = 30000;
 
   private isReady = false;
+
+  private syncStatus: 'idle' | 'syncing' | 'synced' = 'idle';
 
   constructor(id: string) {
     this.id = id;
@@ -49,8 +51,8 @@ class Client {
     this.wpp.on('ready', async () => {
       this.isReady = true;
       console.log(`Client ${this.id} ready!`);
-      const data = await this.getData();
-      if (!data.isSync) {
+      await this.getData();
+      if (this.syncStatus === 'idle') {
         await this.loadChats();
         console.log('Chats loaded from database.');
       }
@@ -109,6 +111,8 @@ class Client {
       dataDict: { last_sync_at: dayLib().format('YYYY-MM-DD HH:mm:ss.SSS') },
       where: { id: this.id },
     });
+
+    this.syncStatus = 'syncing';
   }
 
   private async saveMessage(messageData: Whatsapp.Message, statusId: number) {
@@ -167,34 +171,41 @@ class Client {
   }
 
   public async getData() {
-    let isSync = false;
-
     const database = await databasePromise;
 
-    const data = await database.findFirst<IClient>({
-      table: 'clients',
-      where: { id: this.id },
-      select: { last_sync_at: true },
-    });
+    const [dataChatSync, dataMsgSync] = await Promise.all([
+      database.query<{ count: number }>(
+        'SELECT COUNT(*) FROM repo_chats WHERE is_sync = true',
+      ),
+      database.query<{ count: number }>(
+        'SELECT COUNT(*) FROM repo_messages WHERE status_id = 6',
+      ),
+    ]);
+    if (dataChatSync[0].count > 0 || dataMsgSync[0].count > 0) {
+      this.syncStatus = 'syncing';
+    } else {
+      const data = await database.findFirst<IClient>({
+        table: 'clients',
+        where: { id: this.id },
+        select: { last_sync_at: true },
+      });
 
-    if (data?.last_sync_at && dayLib().diff(data.last_sync_at, 'day') === 0) {
-      isSync = true;
+      if (data?.last_sync_at && dayLib().diff(data.last_sync_at, 'day') === 0) {
+        this.syncStatus = 'synced';
+      } else {
+        this.syncStatus = 'idle';
+      }
     }
 
-    return { ...this.getInfo(), isReady: this.isReady, isSync };
+    return { ...this.getInfo(), isReady: this.isReady, syncStatus: this.syncStatus };
   }
 
   public async getChats() {
-    const database = await databasePromise;
+    const data = await this.getData();
 
-    const chats = await database.query<IChatWithMessages>(
-      `SELECT c.id, c."name", c.is_group, c.profile_pic_url, cc.unread_count, cc."date",
-cc.date_display, cc."hour", cc.messages FROM clients_chats cc
-JOIN chats c ON cc.chat_id = c.id WHERE cc.client_id = $1 ORDER BY cc."date" DESC;`,
-      [this.id],
-    );
+    const chats = await listChatByClientId(this.id);
 
-    return { ...this.getData(), chats: chats.filter((ch) => ch.name.length > 2) };
+    return { ...data, chats: chats.filter((ch) => ch.name.length > 2) };
   }
 }
 
