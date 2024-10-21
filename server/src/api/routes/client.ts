@@ -9,8 +9,9 @@ clientRouter.post('', async (req: Request, res: Response) => {
   res.status(201).json('sucess');
 });
 
-clientRouter.get('', (req: Request, res: Response) => {
-  res.json(req.clientManager.listClients());
+clientRouter.get('', async (req: Request, res: Response) => {
+  const clients = await req.clientManager.listClients();
+  res.json(clients);
 });
 
 clientRouter.get('/:id', verifyClient, async (req: Request, res: Response) => {
