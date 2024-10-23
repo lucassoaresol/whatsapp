@@ -5,14 +5,14 @@ async function databaseInit() {
     const database = await databasePromise;
 
     const STATUS_TYPES = [
-      'created',
-      'received',
-      'read',
-      'edited',
-      'deleted',
-      'history',
-      'pending deletion',
-      'media unavailable',
+      { id: 1, name: 'created' },
+      { id: 2, name: 'received' },
+      { id: 3, name: 'read' },
+      { id: 4, name: 'edited' },
+      { id: 5, name: 'deleted' },
+      { id: 6, name: 'history' },
+      { id: 7, name: 'pending deletion' },
+      { id: 8, name: 'media unavailable' },
     ];
 
     const existingStatuses = await database.findMany<{ name: string }>({
@@ -23,14 +23,14 @@ async function databaseInit() {
     const existingStatusNames = existingStatuses.map((row) => row.name);
 
     const statusesToInsert = STATUS_TYPES.filter(
-      (status) => !existingStatusNames.includes(status),
+      (status) => !existingStatusNames.includes(status.name),
     );
 
     if (statusesToInsert.length > 0) {
       for (const status of statusesToInsert) {
         await database.insertIntoTable({
           table: 'status_types',
-          dataDict: { name: status },
+          dataDict: status,
         });
       }
       console.log('Status inseridos com sucesso:', statusesToInsert);
