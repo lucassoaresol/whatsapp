@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsup src",
-    "db": "pnpm pg-utils migrate && tsx src/utils/databaseInit.ts",
+    "db": "pnpm pg-utils create && pnpm pg-utils migrate && tsx src/utils/databaseInit.ts",
     "dev": "tsx watch src/index.ts",
     "lint": "eslint src/**/*.ts --fix",
     "start": "node dist/index.cjs",
