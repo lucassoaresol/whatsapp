@@ -8,6 +8,8 @@ import RepoMessageManager from '../models/repoMessageManager';
 let isRunning = false;
 let lastLogTime: Dayjs | null = null;
 const jobName = 'CarregarDados';
+const chatManager = new RepoChatManager();
+const repoMessage = new RepoMessageManager();
 
 CronJob.from({
   cronTime: '*/3 * * * * *',
@@ -30,9 +32,6 @@ CronJob.from({
     );
 
     try {
-      const chatManager = new RepoChatManager();
-      const repoMessage = new RepoMessageManager();
-
       await Promise.all([
         chatManager.loadDataFromDatabase(),
         repoMessage.loadDataFromDatabase(),
