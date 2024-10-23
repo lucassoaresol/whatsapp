@@ -5,6 +5,8 @@ import { getClientManager } from './clientManager';
 import RepoMessage from './repoMessage';
 
 class RepoChat {
+  private isSaved = false;
+
   constructor(
     private isSync: boolean,
     private chatId: string,
@@ -59,9 +61,11 @@ class RepoChat {
 
   public async syncClient() {
     const clientWpp = await this.getClientWPP();
+
     if (clientWpp) {
       const chat = await clientWpp.getChatById(this.chatId);
-      const messages = await chat.fetchMessages({ limit: 50 });
+
+      const messages = await chat.fetchMessages({ limit: Infinity });
 
       await Promise.all(
         messages.map(async (msg) => await this.processSync(msg.id._serialized)),
@@ -100,14 +104,15 @@ class RepoChat {
           select: { key: true },
         });
       }
+
+      this.isSaved = true;
     }
+
+    return this.isSaved;
   }
 
   public getData() {
-    return {
-      chatId: this.chatId,
-      clientId: this.clientId,
-    };
+    return { chatId: this.chatId, clientId: this.clientId };
   }
 }
 
