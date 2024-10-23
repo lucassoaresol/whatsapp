@@ -4,6 +4,9 @@ import databasePromise from '../libs/database';
 import RepoChat from './repoChat';
 
 class Chat {
+  private isValid = false;
+  private isSaved = false;
+
   private id!: string;
   private name!: string;
   private isGroup!: boolean;
@@ -12,11 +15,10 @@ class Chat {
   constructor(private repoChat: RepoChat) {}
 
   private async getChatData() {
-    let isValid = false;
     const dataRepo = this.repoChat.getData();
     const clientWpp = await this.repoChat.getClientWPP();
     if (clientWpp) {
-      isValid = true;
+      this.isValid = true;
       const chat = await clientWpp.getChatById(dataRepo.chatId);
       this.id = dataRepo.chatId;
       this.isGroup = chat.isGroup;
@@ -40,16 +42,12 @@ class Chat {
 
       this.name = name;
     }
-    return isValid;
   }
 
   public async save() {
-    const [database, isValid] = await Promise.all([
-      databasePromise,
-      this.getChatData(),
-    ]);
+    const [database] = await Promise.all([databasePromise, this.getChatData()]);
 
-    if (isValid) {
+    if (this.isValid) {
       const chatData = await database.findFirst<IChat>({
         table: 'chats',
         where: { id: this.id },
@@ -78,7 +76,10 @@ class Chat {
           },
         });
       }
+      this.isSaved = true;
     }
+
+    return this.isSaved;
   }
 }
 
