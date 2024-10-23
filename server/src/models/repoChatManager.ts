@@ -5,42 +5,54 @@ import Chat from './chat';
 import RepoChat from './repoChat';
 
 class RepoChatManager {
-  private chats: Map<string, Chat> = new Map();
+  private currentOffset: number = 0;
+  private limitPerPage: number = 10;
 
   public async loadDataFromDatabase() {
     try {
       const database = await databasePromise;
 
       const chats = await database.query<IRepoChat>(
-        'SELECT DISTINCT ON (chat_id) * FROM repo_chats LIMIT 10;',
+        'SELECT DISTINCT ON (chat_id) * FROM repo_chats OFFSET $1 LIMIT $2;',
+        [this.currentOffset, this.limitPerPage],
       );
 
-      await Promise.all(chats.map(async (ch) => await this.addChat(ch)));
+      if (chats.length === 0) {
+        this.resetOffset();
+        return;
+      }
+
+      await Promise.all(chats.map(async (ch) => this.saveChat(ch)));
+
+      this.currentOffset += this.limitPerPage;
     } catch (error) {
       console.error('Error loading chats from database:', error);
     }
   }
 
-  private async addChat({ chat_id, client_id, id, is_sync }: IRepoChat) {
-    if (this.chats.has(chat_id)) {
-      console.log(`Chat with ID ${id} already exists.`);
-      return;
-    }
-
+  private async saveChat({ chat_id, client_id, id, is_sync }: IRepoChat) {
+    let isSaved = false;
     const repoChat = new RepoChat(is_sync, chat_id, client_id, id);
 
     const chat = new Chat(repoChat);
 
-    await chat.save();
+    isSaved = await chat.save();
 
-    if (is_sync) {
-      await repoChat.syncClient();
+    if (isSaved) {
+      if (is_sync) {
+        await repoChat.syncClient();
+      }
+      isSaved = await repoChat.saveClientChat();
     }
 
-    await Promise.all([repoChat.saveClientChat(), repoChat.destroy()]);
+    if (isSaved) {
+      await repoChat.destroy();
+      console.log(`Chat with ID ${chat_id} has been added.`);
+    }
+  }
 
-    this.chats.set(chat_id, chat);
-    console.log(`Chat with ID ${id} has been added.`);
+  private resetOffset() {
+    this.currentOffset = 0;
   }
 }
 
