@@ -87,7 +87,7 @@ class Message {
 
               const chatFrom = new Chat(repoChatFrom);
 
-              await chatFrom.save();
+              this.isValid = await chatFrom.save();
             }
 
             if (msg.hasMedia) {
