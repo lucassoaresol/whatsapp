@@ -3,6 +3,7 @@ import { Request, Response, Router } from 'express';
 import databasePromise from '../../libs/database';
 import { formatDate } from '../../utils/formatDate';
 import { listChatByClientId } from '../../utils/listChatByClientId';
+import { listParticipants } from '../../utils/listParticipants';
 
 const chatRouter = Router();
 
@@ -67,6 +68,10 @@ ORDER BY
   );
 
   if (chat.length > 1) {
+    const participants = chat[0].is_group
+      ? await listParticipants(chat[0].chat_id)
+      : undefined;
+
     const result = {
       id: chat[0].chat_id,
       name: chat[0].chat_name,
@@ -96,6 +101,7 @@ ORDER BY
             }
           : undefined,
       },
+      participants,
     };
 
     res.json(result);
