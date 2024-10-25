@@ -47,6 +47,25 @@ class Media {
     }
   }
 
+  public async remove() {
+    const fileName = `./public/${this.path}`;
+
+    const database = await databasePromise;
+
+    unlink(fileName, async (err) => {
+      if (err) {
+        console.error(`Erro ao deletar o arquivo ${fileName}:`, err);
+      } else {
+        await database.updateIntoTable({
+          table: 'medias',
+          dataDict: { is_down: false },
+          where: { id: this.id },
+        });
+        console.log(`Arquivo deletado: ${fileName}`);
+      }
+    });
+  }
+
   public async destroy() {
     const fileName = `./public/${this.path}`;
 
