@@ -190,7 +190,7 @@ class Client {
         select: { last_sync_at: true },
       });
 
-      if (data?.last_sync_at && dayLib().diff(data.last_sync_at, 'day') === 0) {
+      if (data && data.last_sync_at && dayLib().diff(data.last_sync_at, 'day') === 30) {
         this.syncStatus = 'synced';
       } else {
         this.syncStatus = 'idle';
