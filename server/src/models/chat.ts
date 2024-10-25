@@ -2,6 +2,7 @@ import { Chat as ChatWpp, GroupParticipant } from 'whatsapp-web.js';
 
 import { IChat, IGroup } from '../interfaces/chat';
 import databasePromise from '../libs/database';
+import dayLib from '../libs/dayjs';
 
 import RepoChat from './repoChat';
 
@@ -66,7 +67,7 @@ class Chat {
       await Promise.all(
         participants.map(async (pr) => {
           const repoChatPr = new RepoChat(
-            false,
+            dataRepo.isSync,
             pr.id._serialized,
             dataRepo.clientId,
             dataRepo.chatId,
@@ -128,17 +129,11 @@ class Chat {
     }
   }
 
-  public async save() {
+  private async process(chatData: IChat | null) {
     const dataRepo = this.repoChat.getData();
     const [database] = await Promise.all([databasePromise, this.getChatData()]);
 
     if (this.isValid) {
-      const chatData = await database.findFirst<IChat>({
-        table: 'chats',
-        where: { id: this.id },
-        select: { name: true, profile_pic_url: true },
-      });
-
       if (chatData) {
         if (
           chatData.name !== this.name ||
@@ -162,11 +157,37 @@ class Chat {
         });
       }
 
+      this.isSaved = true;
+
       if (dataRepo.groupId) {
         await this.addGroup(dataRepo.groupId, dataRepo.chatId);
       } else {
         this.isSaved = true;
       }
+    }
+  }
+
+  public async save() {
+    const dataRepo = this.repoChat.getData();
+    const database = await databasePromise;
+
+    const chatData = await database.findFirst<IChat>({
+      table: 'chats',
+      where: { id: dataRepo.chatId },
+      select: { name: true, profile_pic_url: true, updated_at: true },
+    });
+
+    if (dataRepo.isSync) {
+      await this.process(chatData);
+    } else if (chatData) {
+      const updatedAt = dayLib(chatData.updated_at);
+      if (dayLib().diff(updatedAt, 'm') > 5) {
+        await this.process(chatData);
+      } else {
+        this.isSaved = true;
+      }
+    } else {
+      await this.process(chatData);
     }
 
     return this.isSaved;
