@@ -113,7 +113,7 @@ class Message {
                   const path = `media/${fileName}`;
                   const mediaData = new Media(mimeType, media.data, path);
                   this.mediaId = await mediaData.save();
-                  if (today.diff(timestamp, 'd') < 6) {
+                  if (today.diff(timestamp, 'd') <= 10) {
                     await mediaData.down();
                   }
                 } else {
