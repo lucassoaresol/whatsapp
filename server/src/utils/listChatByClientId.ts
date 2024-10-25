@@ -16,6 +16,8 @@ export async function listChatByClientId(clientId: string) {
     m.id AS message_id,
     m.body AS message_body,
     m.from_me,
+    s.id AS status_id,
+    s."name" AS status_name,
     COALESCE(sender.id, null) AS sender_id,
     COALESCE(sender."name", null) AS sender_name,
     COALESCE(sender.is_group, null) AS sender_is_group,
@@ -31,6 +33,8 @@ JOIN
     chats c ON cc.chat_id = c.id
 JOIN
     messages m ON m.chat_id = cc."key"
+JOIN
+    status_types s ON s.id = m.status_id
 LEFT JOIN
     chats sender ON m.from_id = sender.id
 LEFT JOIN
@@ -43,10 +47,6 @@ AND
         FROM messages sub_m
         WHERE sub_m.chat_id = m.chat_id
     )
-GROUP BY
-    c.id, c."name", c.is_group, c.profile_pic_url, cc.unread_count, m.id, m.body, m.from_me,
-    sender.id, sender."name", sender.is_group, sender.profile_pic_url, media.id, media.mime_type,
-    media.path, media.is_down, m.created_at
 ORDER BY
     last_message_time DESC;`,
     [clientId],
@@ -64,7 +64,8 @@ ORDER BY
         id: row.message_id,
         body: row.message_body,
         from_me: row.from_me,
-        created_at: row.last_message_time,
+        ...formatDate(row.last_message_time),
+        status: { id: row.status_id, name: row.status_name },
         from: row.sender_id
           ? {
               id: row.sender_id,

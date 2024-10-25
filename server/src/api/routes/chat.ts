@@ -30,6 +30,8 @@ chatRouter.get('/:chat_id', async (req: Request, res: Response) => {
     m.id AS message_id,
     m.body AS message_body,
     m.from_me,
+    s.id AS status_id,
+    s."name" AS status_name,
     COALESCE(sender.id, null) AS sender_id,
     COALESCE(sender."name", null) AS sender_name,
     COALESCE(sender.is_group, null) AS sender_is_group,
@@ -45,6 +47,8 @@ JOIN
     chats c ON cc.chat_id = c.id
 JOIN
     messages m ON m.chat_id = cc."key"
+JOIN
+    status_types s ON s.id = m.status_id
 LEFT JOIN
     chats sender ON m.from_id = sender.id
 LEFT JOIN
@@ -58,16 +62,12 @@ AND
         FROM messages sub_m
         WHERE sub_m.chat_id = m.chat_id
     )
-GROUP BY
-    c.id, c."name", c.is_group, c.profile_pic_url, cc.unread_count, m.id, m.body, m.from_me,
-    sender.id, sender."name", sender.is_group, sender.profile_pic_url, media.id, media.mime_type,
-    media.path, media.is_down, m.created_at
 ORDER BY
     last_message_time DESC;`,
     [clientId, chatId],
   );
 
-  if (chat.length > 1) {
+  if (chat.length > 0) {
     const participants = chat[0].is_group
       ? await listParticipants(chat[0].chat_id)
       : undefined;
@@ -83,7 +83,8 @@ ORDER BY
         id: chat[0].message_id,
         body: chat[0].message_body,
         from_me: chat[0].from_me,
-        created_at: chat[0].last_message_time,
+        ...formatDate(chat[0].last_message_time),
+        status: { id: chat[0].status_id, name: chat[0].status_name },
         from: chat[0].sender_id
           ? {
               id: chat[0].sender_id,
@@ -105,6 +106,7 @@ ORDER BY
     };
 
     res.json(result);
+    return;
   }
 
   res.status(404).json('Not Found');
@@ -121,6 +123,8 @@ chatRouter.get('/:chat_id/messages', async (req: Request, res: Response) => {
     m.body AS message_body,
     m.from_me,
     m.created_at AS message_created_at,
+    s.id AS status_id,
+    s."name" AS status_name,
     COALESCE(sender.id, null) AS sender_id,
     COALESCE(sender."name", null) AS sender_name,
     COALESCE(sender.is_group, null) AS sender_is_group,
@@ -133,6 +137,8 @@ FROM
     clients_chats cc
 JOIN
     messages m ON m.chat_id = cc."key"
+JOIN
+    status_types s ON s.id = m.status_id
 LEFT JOIN
     chats sender ON m.from_id = sender.id
 LEFT JOIN
@@ -149,8 +155,8 @@ ORDER BY
     id: row.message_id,
     body: row.message_body,
     from_me: row.from_me,
-    created_at: row.message_created_at,
     ...formatDate(row.message_created_at),
+    status: { id: row.status_id, name: row.status_name },
     from: row.sender_id
       ? {
           id: row.sender_id,
