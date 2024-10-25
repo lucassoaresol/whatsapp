@@ -181,7 +181,7 @@ class Chat {
       await this.process(chatData);
     } else if (chatData) {
       const updatedAt = dayLib(chatData.updated_at);
-      if (dayLib().diff(updatedAt, 'm') > 5) {
+      if (dayLib().diff(updatedAt, 'm') > 15) {
         await this.process(chatData);
       } else {
         this.isSaved = true;
