@@ -21,6 +21,7 @@ export function formatDate(date: string) {
   }
 
   return {
+    date: dateDay.format('YYYY-MM-DD HH:mm:ss.SSS'),
     date_display: dateDisplay,
     hour: dateDay.format('HH:mm'),
   };
