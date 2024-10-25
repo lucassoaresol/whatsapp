@@ -64,18 +64,6 @@ class Chat {
     if (chatData.groupMetadata.participants) {
       const participants = chatData.groupMetadata.participants;
 
-      await Promise.all(
-        participants.map(async (pr) => {
-          const repoChatPr = new RepoChat(
-            dataRepo.isSync,
-            pr.id._serialized,
-            dataRepo.clientId,
-            dataRepo.chatId,
-          );
-          return await repoChatPr.save();
-        }),
-      );
-
       const participantsData = await database.findMany<IGroup>({
         table: 'groups_chats',
         where: { group_id: dataRepo.chatId },
@@ -84,6 +72,23 @@ class Chat {
 
       const missingParticipants = participantsData.filter(
         (pData) => !participants.some((p) => p.id._serialized === pData.chat_id),
+      );
+
+      const addParticipants = participants.filter(
+        (pData) => !participantsData.some((p) => p.chat_id === pData.id._serialized),
+      );
+
+      await Promise.all(
+        addParticipants.map(async (aP) => {
+          const repoChatPr = new RepoChat(
+            dataRepo.isSync,
+            aP.id._serialized,
+            dataRepo.clientId,
+            dataRepo.chatId,
+          );
+
+          return await repoChatPr.save();
+        }),
       );
 
       await Promise.all(
