@@ -67,7 +67,7 @@ class RepoChat {
     if (clientWpp) {
       const chat = await clientWpp.getChatById(this.chatId);
 
-      const messages = await chat.fetchMessages({ limit: 50 });
+      const messages = await chat.fetchMessages({ limit: 150 });
 
       await Promise.all(
         messages.map(async (msg) => await this.processSync(msg.id._serialized)),
@@ -114,7 +114,12 @@ class RepoChat {
   }
 
   public getData() {
-    return { groupId: this.group_id, chatId: this.chatId, clientId: this.clientId };
+    return {
+      isSync: this.isSync,
+      groupId: this.group_id,
+      chatId: this.chatId,
+      clientId: this.clientId,
+    };
   }
 }
 
