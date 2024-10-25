@@ -3,7 +3,7 @@ import databasePromise from '../libs/database';
 import dayLib from '../libs/dayjs';
 import Media from '../models/media';
 
-export async function deleteOldMedias(daysBack = 5) {
+export async function removeOldMedias(daysBack = 5) {
   const database = await databasePromise;
   const dateRef = dayLib().subtract(daysBack, 'day').format('YYYY-MM-DD HH:mm:ss.SSS');
 
@@ -17,6 +17,6 @@ export async function deleteOldMedias(daysBack = 5) {
   for (const mediaData of medias) {
     const { data, id, mime_type, path } = mediaData;
     const media = new Media(mime_type, data, path, id);
-    await media.destroy();
+    await media.remove();
   }
 }
