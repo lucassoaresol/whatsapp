@@ -1,6 +1,7 @@
 import databasePromise from '../libs/database';
 
 import { formatDate } from './formatDate';
+import { listParticipants } from './listParticipants';
 
 export async function listChatByClientId(clientId: string) {
   const database = await databasePromise;
@@ -51,36 +52,39 @@ ORDER BY
     [clientId],
   );
 
-  const result = chats.map((row) => ({
-    id: row.chat_id,
-    name: row.chat_name,
-    is_group: row.is_group,
-    profile_pic_url: row.chat_profile_pic_url,
-    unread_count: row.unread_count,
-    ...formatDate(row.last_message_time),
-    message: {
-      id: row.message_id,
-      body: row.message_body,
-      from_me: row.from_me,
-      created_at: row.last_message_time,
-      from: row.sender_id
-        ? {
-            id: row.sender_id,
-            name: row.sender_name,
-            is_group: row.sender_is_group,
-            profile_pic_url: row.sender_profile_pic_url,
-          }
-        : undefined,
-      media: row.media_id
-        ? {
-            id: row.media_id,
-            mime_type: row.media_mime_type,
-            path: row.media_path,
-            is_down: row.media_is_down,
-          }
-        : undefined,
-    },
-  }));
+  const result = await Promise.all(
+    chats.map(async (row) => ({
+      id: row.chat_id,
+      name: row.chat_name,
+      is_group: row.is_group,
+      profile_pic_url: row.chat_profile_pic_url,
+      unread_count: row.unread_count,
+      ...formatDate(row.last_message_time),
+      message: {
+        id: row.message_id,
+        body: row.message_body,
+        from_me: row.from_me,
+        created_at: row.last_message_time,
+        from: row.sender_id
+          ? {
+              id: row.sender_id,
+              name: row.sender_name,
+              is_group: row.sender_is_group,
+              profile_pic_url: row.sender_profile_pic_url,
+            }
+          : undefined,
+        media: row.media_id
+          ? {
+              id: row.media_id,
+              mime_type: row.media_mime_type,
+              path: row.media_path,
+              is_down: row.media_is_down,
+            }
+          : undefined,
+      },
+      participants: row.is_group ? await listParticipants(row.chat_id) : undefined,
+    })),
+  );
 
   return result;
 }
