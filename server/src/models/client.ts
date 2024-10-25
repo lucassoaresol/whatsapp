@@ -181,6 +181,7 @@ class Client {
         'SELECT COUNT(*) FROM repo_messages WHERE status_id = 6',
       ),
     ]);
+
     if (dataChatSync[0].count > 0 || dataMsgSync[0].count > 0) {
       this.syncStatus = 'syncing';
     } else {
@@ -190,7 +191,9 @@ class Client {
         select: { last_sync_at: true },
       });
 
-      if (data && data.last_sync_at && dayLib().diff(data.last_sync_at, 'day') === 30) {
+      const lastSyncAt = dayLib(data ? data.last_sync_at : undefined);
+
+      if (dayLib().diff(lastSyncAt, 'day') >= 30) {
         this.syncStatus = 'synced';
       } else {
         this.syncStatus = 'idle';
