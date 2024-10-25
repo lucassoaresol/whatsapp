@@ -30,15 +30,15 @@ class RepoChatManager {
     }
   }
 
-  private async saveChat({ chat_id, client_id, id, is_sync }: IRepoChat) {
+  private async saveChat({ chat_id, client_id, id, is_sync, group_id }: IRepoChat) {
     let isSaved = false;
-    const repoChat = new RepoChat(is_sync, chat_id, client_id, id);
+    const repoChat = new RepoChat(is_sync, chat_id, client_id, group_id, id);
 
     const chat = new Chat(repoChat);
 
     isSaved = await chat.save();
 
-    if (isSaved) {
+    if (isSaved && !group_id) {
       if (is_sync) {
         await repoChat.syncClient();
       }
