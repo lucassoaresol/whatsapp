@@ -16,7 +16,7 @@ class Media {
 
     const imgDTO = await database.insertIntoTable({
       table: 'medias',
-      dataDict: { mime_type: this.mimeType, path: this.path },
+      dataDict: { mime_type: this.mimeType, data: this.data, path: this.path },
       select: { id: true },
     });
 
