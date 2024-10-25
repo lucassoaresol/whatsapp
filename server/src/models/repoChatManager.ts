@@ -6,7 +6,7 @@ import RepoChat from './repoChat';
 
 class RepoChatManager {
   private currentOffset: number = 0;
-  private limitPerPage: number = 5;
+  private limitPerPage: number = 10;
 
   public async loadDataFromDatabase() {
     try {
