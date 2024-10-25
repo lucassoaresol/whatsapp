@@ -53,6 +53,27 @@ class Chat {
     });
   }
 
+  private async addPartGroup(chat_id: string) {
+    const dataRepo = this.repoChat.getData();
+    const database = await databasePromise;
+
+    const chatData = await database.findFirst({
+      table: 'repo_chats',
+      where: { group_id: dataRepo.chatId, chat_id },
+    });
+
+    if (!chatData) {
+      const repoChatPr = new RepoChat(
+        dataRepo.isSync,
+        chat_id,
+        dataRepo.clientId,
+        dataRepo.chatId,
+      );
+
+      return await repoChatPr.save();
+    }
+  }
+
   private async getChatGroupData(chat: ChatWpp) {
     const dataRepo = this.repoChat.getData();
     const database = await databasePromise;
@@ -79,16 +100,7 @@ class Chat {
       );
 
       await Promise.all(
-        addParticipants.map(async (aP) => {
-          const repoChatPr = new RepoChat(
-            dataRepo.isSync,
-            aP.id._serialized,
-            dataRepo.clientId,
-            dataRepo.chatId,
-          );
-
-          return await repoChatPr.save();
-        }),
+        addParticipants.map(async (aP) => await this.addPartGroup(aP.id._serialized)),
       );
 
       await Promise.all(
