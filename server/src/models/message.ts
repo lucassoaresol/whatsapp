@@ -1,6 +1,6 @@
 import mime from 'mime-types';
 
-import { IClientChat } from '../interfaces/chat';
+import { IClientChatWithChat } from '../interfaces/chat';
 import { IMedia } from '../interfaces/media';
 import { IMessage } from '../interfaces/message';
 import databasePromise from '../libs/database';
@@ -45,10 +45,7 @@ class Message {
       const clientWpp = await this.repoMessage.getClientWPP();
       if (clientWpp) {
         const today = dayLib();
-        const [chat, msg] = await Promise.all([
-          clientWpp.getChatById(dataRepo.chatId),
-          clientWpp.getMessageById(dataRepo.msgId),
-        ]);
+        const msg = await clientWpp.getMessageById(dataRepo.msgId);
         if (msg) {
           const timestamp = dayLib(msg.timestamp * 1000).format(
             'YYYY-MM-DD HH:mm:ss.SSS',
@@ -71,9 +68,12 @@ class Message {
               this.statusId = dataRepo.statusId;
             }
 
-            const chatData = await database.findFirst<IClientChat>({
+            const chatData = await database.findFirst<IClientChatWithChat>({
               table: 'clients_chats',
               where: { client_id: dataRepo.clientId, chat_id: dataRepo.chatId },
+              joins: [
+                { table: 'chats', on: { chat_id: 'id' }, select: { is_group: true } },
+              ],
               select: { key: true },
             });
 
@@ -81,7 +81,7 @@ class Message {
               this.isValid = true;
               this.chatId = chatData.key;
 
-              if (chat.isGroup && !msg.fromMe) {
+              if (chatData.c_is_group && !msg.fromMe) {
                 const from = await msg.getContact();
                 this.fromId = from.id._serialized;
                 const repoChatFrom = new RepoChat(
