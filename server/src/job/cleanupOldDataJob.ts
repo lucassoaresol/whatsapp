@@ -1,12 +1,12 @@
 import { CronJob } from 'cron';
 
-import { deleteOldMessages } from '../utils/deleteOldMessages';
+import { deleteOldMedias } from '../utils/deleteOldMedias';
 import { deleteOldVotes } from '../utils/deleteOldVotes';
 
 CronJob.from({
   cronTime: '0 0 * * *',
   onTick: async () => {
-    await Promise.all([deleteOldMessages(), deleteOldVotes()]);
+    await Promise.all([deleteOldMedias(), deleteOldVotes()]);
   },
   start: true,
 });
