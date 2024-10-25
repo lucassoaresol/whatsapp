@@ -193,7 +193,7 @@ class Client {
 
       const lastSyncAt = dayLib(data ? data.last_sync_at : undefined);
 
-      if (dayLib().diff(lastSyncAt, 'day') >= 30) {
+      if (dayLib().diff(lastSyncAt, 'day') <= 30) {
         this.syncStatus = 'synced';
       } else {
         this.syncStatus = 'idle';
