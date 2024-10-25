@@ -6,7 +6,6 @@ import { IMessage } from '../interfaces/message';
 import databasePromise from '../libs/database';
 import dayLib from '../libs/dayjs';
 
-import Chat from './chat';
 import Media from './media';
 import RepoChat from './repoChat';
 import RepoMessage from './repoMessage';
@@ -84,15 +83,25 @@ class Message {
               if (chatData.c_is_group && !msg.fromMe) {
                 const from = await msg.getContact();
                 this.fromId = from.id._serialized;
-                const repoChatFrom = new RepoChat(
-                  false,
-                  this.fromId,
-                  dataRepo.clientId,
-                );
 
-                const chatFrom = new Chat(repoChatFrom);
+                const chatFrom = await database.findFirst({
+                  table: 'chats',
+                  where: { id: this.fromId },
+                  select: { id: true },
+                });
 
-                this.isValid = await chatFrom.save();
+                if (chatFrom) {
+                  this.isValid = true;
+                } else {
+                  const repoChatFrom = new RepoChat(
+                    false,
+                    this.fromId,
+                    dataRepo.clientId,
+                    dataRepo.chatId,
+                  );
+                  await repoChatFrom.save();
+                  this.isValid = false;
+                }
               }
 
               if (msg.hasMedia) {
