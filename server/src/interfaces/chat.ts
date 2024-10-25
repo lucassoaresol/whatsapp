@@ -18,6 +18,13 @@ export interface IClientChat {
   unread_count: number;
 }
 
+export interface IClientChatWithChat extends IClientChat {
+  c_is_group: boolean;
+  c_id: string;
+  c_name: string;
+  c_profile_pic_url: string;
+}
+
 export interface IChatWithMessages extends IChat {
   unread_count: number;
   date: string;
@@ -28,6 +35,13 @@ export interface IChatWithMessages extends IChat {
 export interface IRepoChat {
   id: number;
   is_sync: boolean;
+  group_id?: string;
   chat_id: string;
   client_id: string;
+}
+
+export interface IGroup {
+  key: number;
+  group_id: string;
+  chat_id: string;
 }
