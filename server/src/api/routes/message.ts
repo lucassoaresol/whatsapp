@@ -24,8 +24,8 @@ messageRouter.post('', async (req: Request, res: Response) => {
     id: message.id._serialized,
     body: message.body,
     from_me: true,
-    created_at,
     ...formatDate(created_at),
+    status: { id: 1, name: 'created' },
   };
 
   res.status(201).json(result);
