@@ -15,6 +15,7 @@ class Message {
   private isSaved = false;
 
   private id!: string;
+  private type!: string;
   private body!: string;
   private fromMe!: boolean;
   private statusId!: number;
@@ -51,6 +52,7 @@ class Message {
           );
           if (timestamp !== 'Invalid Date') {
             this.id = dataRepo.msgId;
+            this.type = msg.type;
             this.body = msg.body;
             this.fromMe = msg.fromMe;
             this.createdAt = timestamp;
@@ -151,6 +153,7 @@ class Message {
           table: 'messages',
           dataDict: {
             id: this.id,
+            type: this.type,
             body: this.body,
             from_me: this.fromMe,
             status_id: this.statusId,
