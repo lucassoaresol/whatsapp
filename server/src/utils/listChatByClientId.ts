@@ -41,11 +41,12 @@ LEFT JOIN
     medias media ON m.media_id = media.id
 WHERE
     cc.client_id = $1
-AND
-    m.created_at = (
-        SELECT MAX(sub_m.created_at)
+    AND m.id = (
+        SELECT sub_m.id
         FROM messages sub_m
         WHERE sub_m.chat_id = m.chat_id
+        ORDER BY sub_m.created_at DESC
+        LIMIT 1
     )
 ORDER BY
     last_message_time DESC;`,
