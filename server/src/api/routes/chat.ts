@@ -87,19 +87,19 @@ ORDER BY
         status: { id: chat[0].status_id, name: chat[0].status_name },
         from: chat[0].sender_id
           ? {
-              id: chat[0].sender_id,
-              name: chat[0].sender_name,
-              is_group: chat[0].sender_is_group,
-              profile_pic_url: chat[0].sender_profile_pic_url,
-            }
+            id: chat[0].sender_id,
+            name: chat[0].sender_name,
+            is_group: chat[0].sender_is_group,
+            profile_pic_url: chat[0].sender_profile_pic_url,
+          }
           : undefined,
         media: chat[0].media_id
           ? {
-              id: chat[0].media_id,
-              mime_type: chat[0].media_mime_type,
-              path: chat[0].media_path,
-              is_down: chat[0].media_is_down,
-            }
+            id: chat[0].media_id,
+            mime_type: chat[0].media_mime_type,
+            path: chat[0].media_path,
+            is_down: chat[0].media_is_down,
+          }
           : undefined,
       },
       participants,
@@ -110,6 +110,15 @@ ORDER BY
   }
 
   res.status(404).json('Not Found');
+});
+
+chatRouter.get('/:chat_id/wpp', async (req: Request, res: Response) => {
+  const clientWpp = req.client.getWpp();
+  const chat = await clientWpp.getChatById(req.params.chat_id);
+
+  const messages = await chat.fetchMessages({ limit: 50 });
+
+  res.json({ ...chat, messages });
 });
 
 chatRouter.get('/:chat_id/messages', async (req: Request, res: Response) => {
@@ -159,19 +168,19 @@ ORDER BY
     status: { id: row.status_id, name: row.status_name },
     from: row.sender_id
       ? {
-          id: row.sender_id,
-          name: row.sender_name,
-          is_group: row.sender_is_group,
-          profile_pic_url: row.sender_profile_pic_url,
-        }
+        id: row.sender_id,
+        name: row.sender_name,
+        is_group: row.sender_is_group,
+        profile_pic_url: row.sender_profile_pic_url,
+      }
       : undefined,
     media: row.media_id
       ? {
-          id: row.media_id,
-          mime_type: row.media_mime_type,
-          path: row.media_path,
-          is_down: row.media_is_down,
-        }
+        id: row.media_id,
+        mime_type: row.media_mime_type,
+        path: row.media_path,
+        is_down: row.media_is_down,
+      }
       : undefined,
   }));
 
