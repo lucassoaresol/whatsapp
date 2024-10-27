@@ -1,6 +1,7 @@
 -- up
 CREATE TABLE "messages" (
   "id" TEXT NOT NULL PRIMARY KEY,
+  "type" TEXT NOT NULL,
   "body" TEXT NOT NULL,
   "from_me" BOOLEAN NOT NULL DEFAULT false,
   "status_id" INT NOT NULL,
