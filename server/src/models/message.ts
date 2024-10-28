@@ -3,11 +3,11 @@ import mime from 'mime-types';
 import { IClientChatWithChat } from '../interfaces/chat';
 import { IMedia } from '../interfaces/media';
 import { IMessage } from '../interfaces/message';
+import { chatQueue } from '../libs/bullmq';
 import databasePromise from '../libs/database';
 import dayLib from '../libs/dayjs';
 
 import Media from './media';
-import RepoChat from './repoChat';
 import RepoMessage from './repoMessage';
 
 class Message {
@@ -84,12 +84,15 @@ class Message {
                 if (chatFrom) {
                   this.isValid = true;
                 } else {
-                  const repoChatFrom = new RepoChat(
-                    this.fromId,
-                    dataRepo.clientId,
-                    dataRepo.chatId,
+                  await chatQueue.add(
+                    'save-chat',
+                    {
+                      chat_id: this.fromId,
+                      client_id: dataRepo.clientId,
+                      group_id: dataRepo.chatId,
+                    },
+                    { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
                   );
-                  await repoChatFrom.save();
                   this.isValid = false;
                 }
               }
