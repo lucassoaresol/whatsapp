@@ -1,6 +1,7 @@
 import { Chat as ChatWpp, GroupParticipant } from 'whatsapp-web.js';
 
 import { IChat, IGroup } from '../interfaces/chat';
+import { chatQueue } from '../libs/bullmq';
 import databasePromise from '../libs/database';
 import dayLib from '../libs/dayjs';
 
@@ -53,22 +54,6 @@ class Chat {
     });
   }
 
-  private async addPartGroup(chat_id: string) {
-    const dataRepo = this.repoChat.getData();
-    const database = await databasePromise;
-
-    const chatData = await database.findFirst({
-      table: 'repo_chats',
-      where: { group_id: dataRepo.chatId, chat_id },
-    });
-
-    if (!chatData) {
-      const repoChatPr = new RepoChat(chat_id, dataRepo.clientId, dataRepo.chatId);
-
-      return await repoChatPr.save();
-    }
-  }
-
   private async getChatGroupData(chat: ChatWpp) {
     const dataRepo = this.repoChat.getData();
     const database = await databasePromise;
@@ -95,7 +80,18 @@ class Chat {
       );
 
       await Promise.all(
-        addParticipants.map(async (aP) => await this.addPartGroup(aP.id._serialized)),
+        addParticipants.map(
+          async (aP) =>
+            await chatQueue.add(
+              'save-chat',
+              {
+                chat_id: aP.id._serialized,
+                client_id: dataRepo.clientId,
+                group_id: dataRepo.chatId,
+              },
+              { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+            ),
+        ),
       );
 
       await Promise.all(
