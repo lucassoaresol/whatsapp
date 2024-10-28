@@ -2,13 +2,11 @@ import { IClientChat } from '../interfaces/chat';
 import databasePromise from '../libs/database';
 
 import { getClientManager } from './clientManager';
-import RepoMessage from './repoMessage';
 
 class RepoChat {
   private isSaved = false;
 
   constructor(
-    private isSync: boolean,
     private chatId: string,
     private clientId: string,
     private group_id?: string,
@@ -20,7 +18,6 @@ class RepoChat {
     const repoChatDTO = await database.insertIntoTable({
       table: 'repo_chats',
       dataDict: {
-        is_sync: this.isSync,
         group_id: this.group_id,
         chat_id: this.chatId,
         client_id: this.clientId,
@@ -43,35 +40,6 @@ class RepoChat {
     if (client) {
       const clientWPP = client.getWpp();
       if (clientWPP.info) return clientWPP;
-    }
-  }
-
-  private async processSync(msgId: string) {
-    const database = await databasePromise;
-
-    const msgData = await database.findFirst({
-      table: 'messages',
-      where: { id: msgId },
-      select: { id: true },
-    });
-
-    if (!msgData) {
-      const repo = new RepoMessage(6, msgId, this.chatId, this.clientId);
-      await repo.save();
-    }
-  }
-
-  public async syncClient() {
-    const clientWpp = await this.getClientWPP();
-
-    if (clientWpp) {
-      const chat = await clientWpp.getChatById(this.chatId);
-
-      const messages = await chat.fetchMessages({ limit: 15 });
-
-      await Promise.all(
-        messages.map(async (msg) => await this.processSync(msg.id._serialized)),
-      );
     }
   }
 
@@ -115,7 +83,6 @@ class RepoChat {
 
   public getData() {
     return {
-      isSync: this.isSync,
       groupId: this.group_id,
       chatId: this.chatId,
       clientId: this.clientId,
