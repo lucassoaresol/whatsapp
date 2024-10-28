@@ -1,92 +1,49 @@
-import WAWebJS from 'whatsapp-web.js';
-
-import { IChat } from '../interfaces/chat';
+import { IClientChatWithChat } from '../interfaces/chat';
 import databasePromise from '../libs/database';
 
-import { getClientManager } from './clientManager';
-
-interface IVote {
-  id: number;
-}
+import RepoVote from './repoVote';
 
 class Vote {
-  constructor(
-    private selectedName: string,
-    private chatId: string,
-    private clientId: string,
-  ) {}
+  private isSaved = false;
+
+  private selectedName!: string;
+  private chatId!: number;
+
+  constructor(private repoVote: RepoVote) {}
 
   public async save() {
     const database = await databasePromise;
 
-    const dataVote = (await database.insertIntoTable<IVote>({
+    await database.insertIntoTable({
       table: 'votes',
       dataDict: {
         selected_name: this.selectedName,
         chat_id: this.chatId,
-        client_id: this.clientId,
       },
       select: { id: true },
-    })) as IVote;
+    });
 
-    console.log(`Vote with ID ${dataVote.id} has been added.`);
+    this.isSaved = true;
   }
 
   public async process() {
     const database = await databasePromise;
+    const dataRepo = this.repoVote.getData();
+    this.selectedName = dataRepo.selectedName;
 
-    const clientWPP = await this.getClientWPP();
-    const chat = await database.findFirst<IChat>({
-      table: 'chats',
-      where: { id: this.chatId },
+    const chatData = await database.findFirst<IClientChatWithChat>({
+      table: 'clients_chats',
+      where: { client_id: dataRepo.clientId, chat_id: dataRepo.chatId },
+      joins: [{ table: 'chats', on: { chat_id: 'id' }, select: { is_group: true } }],
+      select: { key: true },
     });
 
-    if (chat) {
-      await this.save();
-    } else if (clientWPP) {
-      await this.getChatData(clientWPP);
+    if (chatData) {
+      this.chatId = chatData.key;
       await this.save();
     }
-  }
 
-  public async getClientWPP() {
-    const clientManager = await getClientManager();
-    const client = clientManager.getClient(this.clientId);
-    if (client) {
-      const clientWPP = client.getWpp();
-      if (clientWPP.info) return clientWPP;
-    }
-  }
-
-  public async getChatData(clientWPP: WAWebJS.Client) {
-    const database = await databasePromise;
-
-    const chatData = await clientWPP.getChatById(this.chatId);
-    let chatName = chatData.name;
-    let profilePicUrl = null;
-    const chatIsGroup = chatData.isGroup;
-
-    if (this.chatId.length > 7) {
-      const contact = await clientWPP.getContactById(this.chatId);
-      profilePicUrl = (await contact.getProfilePicUrl()) || null;
-      if (!chatIsGroup) {
-        chatName = contact.pushname;
-      }
-    }
-
-    if (!chatName) {
-      chatName = '';
-    }
-
-    await database.insertIntoTable({
-      table: 'chats',
-      dataDict: {
-        id: this.chatId,
-        name: chatName,
-        is_group: chatIsGroup,
-        profile_pic_url: profilePicUrl,
-      },
-    });
+    return this.isSaved;
   }
 }
 
