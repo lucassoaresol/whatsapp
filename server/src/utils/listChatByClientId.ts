@@ -45,6 +45,7 @@ WHERE
         SELECT sub_m.id
         FROM messages sub_m
         WHERE sub_m.chat_id = m.chat_id
+        AND sub_m.type NOT IN ('vcard', 'gp2', 'revoked', 'ciphertext', 'e2e_notification', 'interactive', 'notification_template', 'protocol', 'call_log')
         ORDER BY sub_m.created_at DESC
         LIMIT 1
     )
