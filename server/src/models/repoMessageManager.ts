@@ -5,8 +5,8 @@ import Message from './message';
 import RepoMessage from './repoMessage';
 
 class RepoMessageManager {
-  private currentOffset: number = 0;
-  private limitPerPage: number = 10;
+  private currentOffset = 0;
+  private limitPerPage = 5;
 
   public async loadDataFromDatabase() {
     try {
