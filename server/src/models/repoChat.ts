@@ -67,7 +67,7 @@ class RepoChat {
     if (clientWpp) {
       const chat = await clientWpp.getChatById(this.chatId);
 
-      const messages = await chat.fetchMessages({ limit: 50 });
+      const messages = await chat.fetchMessages({ limit: 15 });
 
       await Promise.all(
         messages.map(async (msg) => await this.processSync(msg.id._serialized)),
