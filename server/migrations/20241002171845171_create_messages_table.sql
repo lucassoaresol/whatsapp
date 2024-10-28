@@ -16,12 +16,19 @@ CREATE TABLE "messages" (
   CONSTRAINT "messages_media_id_fkey" FOREIGN KEY ("media_id") REFERENCES "medias" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TRIGGER notify_messages_new_record
+AFTER INSERT ON "messages"
+FOR EACH ROW
+EXECUTE FUNCTION notify_new_record();
+
 CREATE TRIGGER update_messages_updated_at
 BEFORE UPDATE ON "messages"
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
 -- down
+DROP TRIGGER IF EXISTS notify_messages_new_record ON "messages";
+
 DROP TRIGGER IF EXISTS update_messages_updated_at ON "messages";
 
 DROP TABLE "messages";
