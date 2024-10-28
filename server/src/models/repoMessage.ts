@@ -1,36 +1,22 @@
-import databasePromise from '../libs/database';
-
 import { getClientManager } from './clientManager';
+import Message from './message';
 
 class RepoMessage {
+  private isSaved = false;
+
   constructor(
     private statusId: number,
     private msgId: string,
     private chatId: string,
     private clientId: string,
-    private id?: number,
   ) {}
 
   public async save() {
-    const database = await databasePromise;
-    const repoMessageDTO = await database.insertIntoTable({
-      table: 'repo_messages',
-      dataDict: {
-        status_id: this.statusId,
-        msg_id: this.msgId,
-        chat_id: this.chatId,
-        client_id: this.clientId,
-      },
-      select: { id: true },
-    });
-    const repoMessageData = repoMessageDTO as { id: number };
-    this.id = repoMessageData.id;
-  }
+    const message = new Message(this);
 
-  public async destroy() {
-    const database = await databasePromise;
+    this.isSaved = await message.save();
 
-    await database.deleteFromTable({ table: 'repo_messages', where: { id: this.id! } });
+    return this.isSaved;
   }
 
   public async getClientWPP() {
