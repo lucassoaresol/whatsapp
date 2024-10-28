@@ -4,7 +4,7 @@ import Whatsapp from 'whatsapp-web.js';
 import dayLib from '../../libs/dayjs';
 import { formatDate } from '../../utils/formatDate';
 
-const { Poll } = Whatsapp;
+const { Poll, MessageMedia } = Whatsapp;
 
 const messageRouter = Router();
 
@@ -39,6 +39,17 @@ messageRouter.post('/poll', async (req: Request, res: Response) => {
 
   const message = await client.sendMessage(req.body.number, poll);
   await client.interface.openChatWindow(req.body.number);
+
+  res.status(201).json(message);
+});
+
+messageRouter.post('/media', async (req: Request, res: Response) => {
+  const client = req.client.getWpp();
+  const media = await MessageMedia.fromUrl(req.body.mediaUrl);
+
+  const message = await client.sendMessage(req.body.number, media, {
+    caption: req.body.caption,
+  });
 
   res.status(201).json(message);
 });
