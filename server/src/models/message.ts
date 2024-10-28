@@ -36,7 +36,7 @@ class Message {
       select: { id: true, media_id: true },
     });
 
-    if (dataRepo.statusId === 7 && dataMsg) {
+    if (dataRepo.statusId === 6 && dataMsg) {
       this.id = dataMsg.id;
       this.mediaId = dataMsg.media_id;
       await this.destroy();
@@ -52,22 +52,11 @@ class Message {
           );
           if (timestamp !== 'Invalid Date') {
             this.id = dataRepo.msgId;
+            this.statusId = dataRepo.statusId;
             this.type = msg.type;
             this.body = msg.body;
             this.fromMe = msg.fromMe;
             this.createdAt = timestamp;
-
-            if (dataRepo.statusId === 6) {
-              if (msg.latestEditMsgKey) {
-                this.statusId = 4;
-              } else if (msg.type === 'revoked') {
-                this.statusId = 5;
-              } else {
-                this.statusId = 3;
-              }
-            } else {
-              this.statusId = dataRepo.statusId;
-            }
 
             const chatData = await database.findFirst<IClientChatWithChat>({
               table: 'clients_chats',
@@ -96,7 +85,6 @@ class Message {
                   this.isValid = true;
                 } else {
                   const repoChatFrom = new RepoChat(
-                    false,
                     this.fromId,
                     dataRepo.clientId,
                     dataRepo.chatId,
@@ -119,7 +107,7 @@ class Message {
                     await mediaData.down();
                   }
                 } else {
-                  this.statusId = 8;
+                  this.statusId = 7;
                 }
               }
             }

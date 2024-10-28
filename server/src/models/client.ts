@@ -1,9 +1,7 @@
 import QRCode from 'qrcode';
 import Whatsapp, { MessageId } from 'whatsapp-web.js';
 
-import { IClient } from '../interfaces/client';
 import databasePromise from '../libs/database';
-import dayLib from '../libs/dayjs';
 import { listChatByClientId } from '../utils/listChatByClientId';
 
 import RepoChat from './repoChat';
@@ -22,8 +20,6 @@ class Client {
   private qrInterval = 30000;
 
   private isReady = false;
-
-  private syncStatus: 'idle' | 'syncing' | 'synced' = 'idle';
 
   constructor(id: string) {
     this.id = id;
@@ -51,11 +47,8 @@ class Client {
     this.wpp.on('ready', async () => {
       this.isReady = true;
       console.log(`Client ${this.id} ready!`);
-      await this.getData();
-      if (this.syncStatus === 'idle') {
-        await this.loadChats();
-        console.log('Chats loaded from database.');
-      }
+      await this.loadChats();
+      console.log('Chats loaded from database.');
     });
 
     this.wpp.on('qr', async (qr) => {
@@ -85,7 +78,7 @@ class Client {
       };
       await this.saveMessage(
         { ...message, id: revoked_msg._data.protocolMessageKey },
-        7,
+        6,
       );
     });
 
@@ -94,32 +87,21 @@ class Client {
 
   public async loadChats() {
     const clientWpp = this.getWpp();
-    const [chats, database] = await Promise.all([
-      clientWpp.getChats(),
-      databasePromise,
-    ]);
+    const chats = await clientWpp.getChats();
 
     await Promise.all([
       chats.map(async (ch) => {
-        const chat = new RepoChat(true, ch.id._serialized, this.id);
+        const chat = new RepoChat(ch.id._serialized, this.id);
         return await chat.save();
       }),
     ]);
-
-    await database.updateIntoTable({
-      table: 'clients',
-      dataDict: { last_sync_at: dayLib().format('YYYY-MM-DD HH:mm:ss.SSS') },
-      where: { id: this.id },
-    });
-
-    this.syncStatus = 'syncing';
   }
 
   private async saveMessage(messageData: Whatsapp.Message, statusId: number) {
     const chatId = messageData.id.remote;
     const msgId = messageData.id._serialized;
 
-    const chat = new RepoChat(false, chatId, this.id);
+    const chat = new RepoChat(chatId, this.id);
     const msg = new RepoMessage(statusId, msgId, chatId, this.id);
 
     await Promise.all([chat.save(), msg.save()]);
@@ -129,7 +111,7 @@ class Client {
     const selectedName = voteData.selectedOptions.at(0)?.name || '';
     const chatId = voteData.voter;
 
-    const chat = new RepoChat(false, chatId, this.id);
+    const chat = new RepoChat(chatId, this.id);
     const vote = new RepoVote(selectedName, chatId, this.id);
 
     await Promise.all([chat.save(), vote.save()]);
@@ -155,11 +137,14 @@ class Client {
   }
 
   public getInfo() {
-    if (this.wpp.info) return { id: this.id, ...this.wpp.info };
-
-    return {
+    const result = {
       id: this.id,
+      isReady: this.isReady,
     };
+
+    if (this.wpp.info) return { ...result, ...this.wpp.info };
+
+    return result;
   }
 
   public getWpp() {
@@ -170,41 +155,8 @@ class Client {
     return this.isReady;
   }
 
-  public async getData() {
-    const database = await databasePromise;
-
-    const [dataChatSync, dataMsgSync] = await Promise.all([
-      database.query<{ count: number }>(
-        'SELECT COUNT(*) FROM repo_chats WHERE is_sync = true',
-      ),
-      database.query<{ count: number }>(
-        'SELECT COUNT(*) FROM repo_messages WHERE status_id = 6',
-      ),
-    ]);
-
-    if (dataChatSync[0].count > 0 || dataMsgSync[0].count > 0) {
-      this.syncStatus = 'syncing';
-    } else {
-      const data = await database.findFirst<IClient>({
-        table: 'clients',
-        where: { id: this.id },
-        select: { last_sync_at: true },
-      });
-
-      const lastSyncAt = data && data.last_sync_at ? dayLib(data.last_sync_at) : null;
-
-      if (lastSyncAt && dayLib().diff(lastSyncAt, 'day') <= 30) {
-        this.syncStatus = 'synced';
-      } else {
-        this.syncStatus = 'idle';
-      }
-    }
-
-    return { ...this.getInfo(), isReady: this.isReady, syncStatus: this.syncStatus };
-  }
-
   public async getChats() {
-    const data = await this.getData();
+    const data = this.getInfo();
 
     const chats = await listChatByClientId(this.id);
 

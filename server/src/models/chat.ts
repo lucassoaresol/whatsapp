@@ -63,12 +63,7 @@ class Chat {
     });
 
     if (!chatData) {
-      const repoChatPr = new RepoChat(
-        dataRepo.isSync,
-        chat_id,
-        dataRepo.clientId,
-        dataRepo.chatId,
-      );
+      const repoChatPr = new RepoChat(chat_id, dataRepo.clientId, dataRepo.chatId);
 
       return await repoChatPr.save();
     }
@@ -194,12 +189,12 @@ class Chat {
       select: { name: true, profile_pic_url: true, updated_at: true },
     });
 
-    if (dataRepo.isSync) {
-      await this.process(chatData);
-    } else if (chatData) {
+    if (chatData) {
       const updatedAt = dayLib(chatData.updated_at);
       if (dayLib().diff(updatedAt, 'm') > 15) {
         await this.process(chatData);
+      } else if (dataRepo.groupId) {
+        await this.addGroup(dataRepo.groupId, dataRepo.chatId);
       } else {
         this.isSaved = true;
       }

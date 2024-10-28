@@ -50,7 +50,7 @@ class ClientManager {
 
   public async listClients() {
     const clientsDataPromises = Array.from(this.clients.values()).map(
-      async (client) => await client.getData(),
+      async (client) => await client.getChats(),
     );
     return await Promise.all(clientsDataPromises);
   }
