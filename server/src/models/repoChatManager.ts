@@ -6,7 +6,7 @@ import RepoChat from './repoChat';
 
 class RepoChatManager {
   private currentOffset = 0;
-  private limitPerPage = 5;
+  private limitPerPage = 10;
 
   public async loadDataFromDatabase() {
     try {
@@ -30,18 +30,15 @@ class RepoChatManager {
     }
   }
 
-  private async saveChat({ chat_id, client_id, id, is_sync, group_id }: IRepoChat) {
+  private async saveChat({ chat_id, client_id, id, group_id }: IRepoChat) {
     let isSaved = false;
-    const repoChat = new RepoChat(is_sync, chat_id, client_id, group_id, id);
+    const repoChat = new RepoChat(chat_id, client_id, group_id, id);
 
     const chat = new Chat(repoChat);
 
     isSaved = await chat.save();
 
     if (isSaved && !group_id) {
-      if (is_sync) {
-        await repoChat.syncClient();
-      }
       isSaved = await repoChat.saveClientChat();
     }
 
