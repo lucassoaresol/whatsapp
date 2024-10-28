@@ -10,9 +10,8 @@ async function databaseInit() {
       { id: 3, name: 'read' },
       { id: 4, name: 'edited' },
       { id: 5, name: 'deleted' },
-      { id: 6, name: 'history' },
-      { id: 7, name: 'pending deletion' },
-      { id: 8, name: 'media unavailable' },
+      { id: 6, name: 'pending deletion' },
+      { id: 7, name: 'media unavailable' },
     ];
 
     const existingStatuses = await database.findMany<{ name: string }>({
