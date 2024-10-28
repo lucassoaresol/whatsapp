@@ -34,7 +34,6 @@ export interface IChatWithMessages extends IChat {
 
 export interface IRepoChat {
   id: number;
-  is_sync: boolean;
   group_id?: string;
   chat_id: string;
   client_id: string;
