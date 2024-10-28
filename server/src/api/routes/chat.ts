@@ -57,10 +57,13 @@ WHERE
     cc.client_id = $1
     AND cc.chat_id = $2
 AND
-    m.created_at = (
-        SELECT MAX(sub_m.created_at)
+    m.id = (
+        SELECT sub_m.id
         FROM messages sub_m
         WHERE sub_m.chat_id = m.chat_id
+        AND sub_m.type NOT IN ('vcard', 'gp2', 'revoked', 'ciphertext', 'e2e_notification', 'interactive', 'notification_template', 'protocol', 'call_log')
+        ORDER BY sub_m.created_at DESC
+        LIMIT 1
     )
 ORDER BY
     last_message_time DESC;`,
@@ -155,6 +158,7 @@ LEFT JOIN
 WHERE
     cc.client_id = $1
     AND cc.chat_id = $2
+    AND m.type NOT IN ('vcard', 'gp2', 'revoked', 'ciphertext', 'e2e_notification', 'interactive', 'notification_template', 'protocol', 'call_log')
 ORDER BY
     m.created_at ASC;`,
     [clientId, chatId],
