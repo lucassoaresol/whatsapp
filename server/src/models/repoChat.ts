@@ -1,6 +1,7 @@
 import { IClientChat } from '../interfaces/chat';
 import databasePromise from '../libs/database';
 
+import Chat from './chat';
 import { getClientManager } from './clientManager';
 
 class RepoChat {
@@ -9,29 +10,19 @@ class RepoChat {
   constructor(
     private chatId: string,
     private clientId: string,
-    private group_id?: string,
-    private id?: number,
+    private groupId?: string,
   ) {}
 
   public async save() {
-    const database = await databasePromise;
-    const repoChatDTO = await database.insertIntoTable({
-      table: 'repo_chats',
-      dataDict: {
-        group_id: this.group_id,
-        chat_id: this.chatId,
-        client_id: this.clientId,
-      },
-      select: { id: true },
-    });
-    const repoChatData = repoChatDTO as { id: number };
-    this.id = repoChatData.id;
-  }
+    const chat = new Chat(this);
 
-  public async destroy() {
-    const database = await databasePromise;
+    this.isSaved = await chat.save();
 
-    await database.deleteFromTable({ table: 'repo_chats', where: { id: this.id! } });
+    if (this.isSaved && !this.groupId) {
+      await this.saveClientChat();
+    }
+
+    return this.isSaved;
   }
 
   public async getClientWPP() {
@@ -77,13 +68,11 @@ class RepoChat {
 
       this.isSaved = true;
     }
-
-    return this.isSaved;
   }
 
   public getData() {
     return {
-      groupId: this.group_id,
+      groupId: this.groupId,
       chatId: this.chatId,
       clientId: this.clientId,
     };
