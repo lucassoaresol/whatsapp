@@ -7,5 +7,12 @@ CREATE TABLE "repo_votes" (
   "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TRIGGER notify_repo_votes_new_record
+AFTER INSERT ON "repo_votes"
+FOR EACH ROW
+EXECUTE FUNCTION notify_new_record();
+
 -- down
+DROP TRIGGER IF EXISTS notify_repo_votes_new_record ON "repo_votes";
+
 DROP TABLE "repo_votes";
