@@ -33,7 +33,6 @@ export interface IChatWithMessages extends IChat {
 }
 
 export interface IRepoChat {
-  id: number;
   group_id?: string;
   chat_id: string;
   client_id: string;

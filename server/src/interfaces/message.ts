@@ -11,7 +11,6 @@ export interface IMessage {
 }
 
 export interface IRepoMessage {
-  id: number;
   status_id: number;
   msg_id: string;
   chat_id: string;
