@@ -20,7 +20,6 @@ class Vote {
         selected_name: this.selectedName,
         chat_id: this.chatId,
       },
-      select: { id: true },
     });
 
     this.isSaved = true;
@@ -34,8 +33,14 @@ class Vote {
     const chatData = await database.findFirst<IClientChatWithChat>({
       table: 'clients_chats',
       where: { client_id: dataRepo.clientId, chat_id: dataRepo.chatId },
-      joins: [{ table: 'chats', on: { chat_id: 'id' }, select: { is_group: true } }],
-      select: { key: true },
+      joins: [
+        {
+          table: 'chats',
+          alias: 'c',
+          on: { chat_id: 'id' },
+        },
+      ],
+      select: { key: true, 'c.is_group': true },
     });
 
     if (chatData) {

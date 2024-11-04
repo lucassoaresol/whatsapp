@@ -49,7 +49,7 @@ class RepoChat {
       });
 
       if (clientChat) {
-        await database.updateIntoTable<IClientChat>({
+        await database.updateIntoTable({
           table: 'clients_chats',
           dataDict: { unread_count: chat.unreadCount },
           where: { key: clientChat.key },
@@ -62,7 +62,6 @@ class RepoChat {
             chat_id: this.chatId,
             unread_count: chat.unreadCount,
           },
-          select: { key: true },
         });
       }
 

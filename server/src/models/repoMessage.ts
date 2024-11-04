@@ -1,3 +1,5 @@
+import { chatQueue } from '../libs/bullmq';
+
 import { getClientManager } from './clientManager';
 import Message from './message';
 
@@ -15,6 +17,15 @@ class RepoMessage {
     const message = new Message(this);
 
     this.isSaved = await message.save();
+
+    await chatQueue.add(
+      'save-chat',
+      {
+        chat_id: this.chatId,
+        client_id: this.clientId,
+      },
+      { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+    );
 
     return this.isSaved;
   }
