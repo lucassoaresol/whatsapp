@@ -12,7 +12,7 @@ export interface IChatWithClient extends IChat {
 }
 
 export interface IClientChat {
-  key: number;
+  id: number;
   client_id: string;
   chat_id: string;
   unread_count: number;
@@ -39,7 +39,7 @@ export interface IRepoChat {
 }
 
 export interface IGroup {
-  key: number;
+  id: number;
   group_id: string;
   chat_id: string;
 }

@@ -40,11 +40,11 @@ class Vote {
           on: { chat_id: 'id' },
         },
       ],
-      select: { key: true, 'c.is_group': true },
+      select: { id: true, 'c.is_group': true },
     });
 
     if (chatData) {
-      this.chatId = chatData.key;
+      this.chatId = chatData.id;
       await this.save();
     }
 

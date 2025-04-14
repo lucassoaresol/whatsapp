@@ -1,9 +1,9 @@
 import { Chat as ChatWpp, GroupParticipant } from 'whatsapp-web.js';
 
 import { IChat, IGroup } from '../interfaces/chat';
-import { chatQueue } from '../libs/bullmq';
 import databasePromise from '../libs/database';
 import dayLib from '../libs/dayjs';
+import { chatQueue } from '../worker/services/chat';
 
 import RepoChat from './repoChat';
 
@@ -31,7 +31,7 @@ class Chat {
       const groupChat = await database.findFirst<IGroup>({
         table: 'groups_chats',
         where: { group_id, chat_id },
-        select: { key: true },
+        select: { id: true },
       });
       if (!groupChat) {
         await database.insertIntoTable({

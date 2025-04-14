@@ -1,9 +1,11 @@
 import QRCode from 'qrcode';
 import Whatsapp, { MessageId } from 'whatsapp-web.js';
 
-import { chatQueue, messageQueue, voteQueue } from '../libs/bullmq';
 import databasePromise from '../libs/database';
 import { listChatByClientId } from '../utils/listChatByClientId';
+import { chatQueue } from '../worker/services/chat';
+import { messageQueue } from '../worker/services/message';
+import { voteQueue } from '../worker/services/vote';
 
 const { Client: ClientWpp, LocalAuth } = Whatsapp;
 
@@ -152,13 +154,8 @@ class Client {
     ]);
   }
 
-  public getRemainingTimeForNextQR(): number {
-    if (this.qrGeneratedAt) {
-      const elapsedTime = Date.now() - this.qrGeneratedAt;
-      const remainingTime = this.qrInterval - elapsedTime;
-      return remainingTime > 0 ? remainingTime : 0;
-    }
-    return 0;
+  public getRemainingTimeForNextQR(): number | null {
+    return this.qrGeneratedAt;
   }
 
   public async save() {

@@ -11,7 +11,7 @@ CREATE TABLE "messages" (
   "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT "messages_status_id_fkey" FOREIGN KEY ("status_id") REFERENCES "status_types" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT "messages_chat_id_fkey" FOREIGN KEY ("chat_id") REFERENCES "clients_chats" ("key") ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT "messages_chat_id_fkey" FOREIGN KEY ("chat_id") REFERENCES "clients_chats" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT "messages_from_id_fkey" FOREIGN KEY ("from_id") REFERENCES "chats" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT "messages_media_id_fkey" FOREIGN KEY ("media_id") REFERENCES "medias" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );

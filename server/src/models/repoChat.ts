@@ -2,7 +2,7 @@ import { IClientChat } from '../interfaces/chat';
 import databasePromise from '../libs/database';
 
 import Chat from './chat';
-import { getClientManager } from './clientManager';
+import { ClientManagerPromise } from './clientManager';
 
 class RepoChat {
   private isSaved = false;
@@ -26,7 +26,7 @@ class RepoChat {
   }
 
   public async getClientWPP() {
-    const clientManager = await getClientManager();
+    const clientManager = await ClientManagerPromise;
     const client = clientManager.getClient(this.clientId);
     if (client) {
       const clientWPP = client.getWpp();
@@ -45,14 +45,14 @@ class RepoChat {
       const clientChat = await database.findFirst<IClientChat>({
         table: 'clients_chats',
         where: { client_id: this.clientId, chat_id: this.chatId },
-        select: { key: true },
+        select: { id: true },
       });
 
       if (clientChat) {
         await database.updateIntoTable({
           table: 'clients_chats',
           dataDict: { unread_count: chat.unreadCount },
-          where: { key: clientChat.key },
+          where: { id: clientChat.id },
         });
       } else {
         await database.insertIntoTable({

@@ -3,9 +3,9 @@ import mime from 'mime-types';
 import { IClientChatWithChat } from '../interfaces/chat';
 import { IMedia } from '../interfaces/media';
 import { IMessage } from '../interfaces/message';
-import { chatQueue } from '../libs/bullmq';
 import databasePromise from '../libs/database';
 import dayLib from '../libs/dayjs';
+import { chatQueue } from '../worker/services/chat';
 
 import Media from './media';
 import RepoMessage from './repoMessage';
@@ -62,12 +62,12 @@ class Message {
               table: 'clients_chats',
               where: { client_id: dataRepo.clientId, chat_id: dataRepo.chatId },
               joins: [{ table: 'chats', alias: 'c', on: { chat_id: 'id' } }],
-              select: { key: true, 'c.is_group': true },
+              select: { id: true, 'c.is_group': true },
             });
 
             if (chatData) {
               this.isValid = true;
-              this.chatId = chatData.key;
+              this.chatId = chatData.id;
 
               if (chatData.c_is_group && !msg.fromMe) {
                 const from = await msg.getContact();

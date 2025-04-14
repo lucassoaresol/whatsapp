@@ -5,7 +5,7 @@ CREATE TABLE "votes" (
   "is_new" BOOLEAN NOT NULL DEFAULT true,
   "chat_id" INTEGER NOT NULL,
   "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT "votes_chat_id_fkey" FOREIGN KEY ("chat_id") REFERENCES "clients_chats" ("key") ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT "votes_chat_id_fkey" FOREIGN KEY ("chat_id") REFERENCES "clients_chats" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- down

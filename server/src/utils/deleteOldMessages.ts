@@ -7,12 +7,16 @@ export async function deleteOldMessages(daysBack = 5) {
   const database = await databasePromise;
   const dateRef = dayLib().subtract(daysBack, 'day').format('YYYY-MM-DD HH:mm:ss.SSS');
 
-  const messages = await database.query<IRepoMessage>(
-    `SELECT m.id AS msg_id, cc.chat_id, cc.client_id FROM messages m
-    JOIN clients_chats cc ON cc.key = m.chat_id
-    WHERE m.created_at <= $1`,
-    [dateRef],
-  );
+  const messages = await database.findMany<IRepoMessage>({
+    table: 'messages',
+    joins: [{ table: 'clients_chats', on: { chat_id: 'id' } }],
+    where: { created_at: { lte: dateRef } },
+    select: {
+      'm.id AS msg_id': true,
+      'cc.chat_id AS chat_id': true,
+      'cc.client_id AS client_id': true,
+    },
+  });
 
   await Promise.all(
     messages.map(async (msg) => {

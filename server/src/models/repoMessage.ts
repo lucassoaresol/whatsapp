@@ -1,6 +1,6 @@
-import { chatQueue } from '../libs/bullmq';
+import { chatQueue } from '../worker/services/chat';
 
-import { getClientManager } from './clientManager';
+import { ClientManagerPromise } from './clientManager';
 import Message from './message';
 
 class RepoMessage {
@@ -31,7 +31,7 @@ class RepoMessage {
   }
 
   public async getClientWPP() {
-    const clientManager = await getClientManager();
+    const clientManager = await ClientManagerPromise;
     const client = clientManager.getClient(this.clientId);
     if (client) {
       const clientWPP = client.getWpp();
