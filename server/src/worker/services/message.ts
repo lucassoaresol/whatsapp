@@ -17,10 +17,13 @@ export const messageWorker = new Worker<IRepoMessage>(
       job.data.chat_id,
       job.data.client_id,
     );
-    const isSaved = await repoMessage.save();
-    if (!isSaved) {
-      throw new Error('Falha ao salvar a mensagem. Tentando novamente...');
-    }
+    await repoMessage.save();
   },
-  { connection: {}, concurrency: 2, prefix: 'whatsapp' },
+  {
+    connection: {},
+    removeOnComplete: { count: 1000 },
+    removeOnFail: { count: 5000 },
+    concurrency: 2,
+    prefix: 'whatsapp',
+  },
 );

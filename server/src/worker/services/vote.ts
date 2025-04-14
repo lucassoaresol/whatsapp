@@ -16,10 +16,13 @@ export const voteWorker = new Worker<IRepoVote>(
       job.data.chat_id,
       job.data.client_id,
     );
-    const isSaved = await repoVote.save();
-    if (!isSaved) {
-      throw new Error('Falha ao salvar o voto. Tentando novamente...');
-    }
+    await repoVote.save();
   },
-  { connection: {}, concurrency: 2, prefix: 'whatsapp' },
+  {
+    connection: {},
+    removeOnComplete: { count: 1000 },
+    removeOnFail: { count: 5000 },
+    concurrency: 2,
+    prefix: 'whatsapp',
+  },
 );
