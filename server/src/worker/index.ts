@@ -1,5 +1,6 @@
-import { chatWorker, messageWorker, voteWorker } from '../libs/bullmq';
-import './cleanupOldDataJob';
+import { chatWorker } from './services/chat';
+import { messageWorker } from './services/message';
+import { voteWorker } from './services/vote';
 
 chatWorker.on('completed', (job) => {
   console.log(`✅ [Sucesso] Tarefa ID ${job.id} processada com sucesso.`);
