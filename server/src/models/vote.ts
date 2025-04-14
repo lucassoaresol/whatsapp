@@ -4,12 +4,10 @@ import databasePromise from '../libs/database';
 import RepoVote from './repoVote';
 
 class Vote {
-  private isSaved = false;
-
   private selectedName!: string;
   private chatId!: number;
 
-  constructor(private repoVote: RepoVote) {}
+  constructor(private repoVote: RepoVote) { }
 
   public async save() {
     const database = await databasePromise;
@@ -21,8 +19,6 @@ class Vote {
         chat_id: this.chatId,
       },
     });
-
-    this.isSaved = true;
   }
 
   public async process() {
@@ -48,7 +44,7 @@ class Vote {
       await this.save();
     }
 
-    return this.isSaved;
+    throw new Error('chat not found');
   }
 }
 

@@ -8,9 +8,6 @@ import { chatQueue } from '../worker/services/chat';
 import RepoChat from './repoChat';
 
 class Chat {
-  private isValid = false;
-  private isSaved = false;
-
   private id!: string;
   private name!: string;
   private isGroup!: boolean;
@@ -39,10 +36,8 @@ class Chat {
           dataDict: { group_id, chat_id },
         });
       }
-      this.isSaved = true;
-    } else {
-      this.isSaved = false;
     }
+    throw new Error('group not found');
   }
 
   private async removeGroup(group_id: string, chat_id: string) {
@@ -107,7 +102,6 @@ class Chat {
     const clientWpp = await this.repoChat.getClientWPP();
 
     if (clientWpp) {
-      this.isValid = true;
       const chat = await clientWpp.getChatById(dataRepo.chatId);
       this.id = dataRepo.chatId;
       this.isGroup = chat.isGroup;
@@ -135,43 +129,37 @@ class Chat {
         await this.getChatGroupData(chat);
       }
     }
+    throw new Error('client wpp not found');
   }
 
   private async process(chatData: IChat | null) {
     const dataRepo = this.repoChat.getData();
     const [database] = await Promise.all([databasePromise, this.getChatData()]);
 
-    if (this.isValid) {
-      if (chatData) {
-        if (
-          chatData.name !== this.name ||
-          chatData.profile_pic_url !== this.profilePicUrl
-        ) {
-          await database.updateIntoTable({
-            table: 'chats',
-            dataDict: { name: this.name, profile_pic_url: this.profilePicUrl },
-            where: { id: this.id },
-          });
-        }
-      } else {
-        await database.insertIntoTable({
+    if (chatData) {
+      if (
+        chatData.name !== this.name ||
+        chatData.profile_pic_url !== this.profilePicUrl
+      ) {
+        await database.updateIntoTable({
           table: 'chats',
-          dataDict: {
-            id: this.id,
-            name: this.name,
-            is_group: this.isGroup,
-            profile_pic_url: this.profilePicUrl,
-          },
+          dataDict: { name: this.name, profile_pic_url: this.profilePicUrl },
+          where: { id: this.id },
         });
       }
-
-      this.isSaved = true;
-
-      if (dataRepo.groupId) {
-        await this.addGroup(dataRepo.groupId, dataRepo.chatId);
-      } else {
-        this.isSaved = true;
-      }
+    } else {
+      await database.insertIntoTable({
+        table: 'chats',
+        dataDict: {
+          id: this.id,
+          name: this.name,
+          is_group: this.isGroup,
+          profile_pic_url: this.profilePicUrl,
+        },
+      });
+    }
+    if (dataRepo.groupId) {
+      await this.addGroup(dataRepo.groupId, dataRepo.chatId);
     }
   }
 
@@ -191,14 +179,10 @@ class Chat {
         await this.process(chatData);
       } else if (dataRepo.groupId) {
         await this.addGroup(dataRepo.groupId, dataRepo.chatId);
-      } else {
-        this.isSaved = true;
       }
     } else {
       await this.process(chatData);
     }
-
-    return this.isSaved;
   }
 }
 

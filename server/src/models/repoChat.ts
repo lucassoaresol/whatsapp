@@ -5,8 +5,6 @@ import Chat from './chat';
 import { ClientManagerPromise } from './clientManager';
 
 class RepoChat {
-  private isSaved = false;
-
   constructor(
     private chatId: string,
     private clientId: string,
@@ -16,13 +14,11 @@ class RepoChat {
   public async save() {
     const chat = new Chat(this);
 
-    this.isSaved = await chat.save();
+    await chat.save();
 
-    if (this.isSaved && !this.groupId) {
+    if (!this.groupId) {
       await this.saveClientChat();
     }
-
-    return this.isSaved;
   }
 
   public async getClientWPP() {
@@ -64,9 +60,8 @@ class RepoChat {
           },
         });
       }
-
-      this.isSaved = true;
     }
+    throw new Error('client wpp not found');
   }
 
   public getData() {

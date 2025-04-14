@@ -11,9 +11,6 @@ import Media from './media';
 import RepoMessage from './repoMessage';
 
 class Message {
-  private isValid = false;
-  private isSaved = false;
-
   private id!: string;
   private type!: string;
   private body!: string;
@@ -40,7 +37,6 @@ class Message {
       this.id = dataMsg.id;
       this.mediaId = dataMsg.media_id;
       await this.destroy();
-      this.isSaved = true;
     } else if (!dataMsg) {
       const clientWpp = await this.repoMessage.getClientWPP();
       if (clientWpp) {
@@ -66,7 +62,6 @@ class Message {
             });
 
             if (chatData) {
-              this.isValid = true;
               this.chatId = chatData.id;
 
               if (chatData.c_is_group && !msg.fromMe) {
@@ -79,9 +74,7 @@ class Message {
                   select: { id: true },
                 });
 
-                if (chatFrom) {
-                  this.isValid = true;
-                } else {
+                if (!chatFrom) {
                   await chatQueue.add(
                     'save-chat',
                     {
@@ -91,7 +84,6 @@ class Message {
                     },
                     { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
                   );
-                  this.isValid = false;
                 }
               }
 
@@ -112,50 +104,47 @@ class Message {
                 }
               }
             }
+            throw new Error('chat not found');
           }
         }
       }
+      throw new Error('client wpp not found');
     }
-    this.isSaved = true;
   }
 
   public async save() {
     const [database] = await Promise.all([databasePromise, this.getMessageData()]);
 
-    if (this.isValid) {
-      const msgData = await database.findFirst<IMessage>({
-        table: 'messages',
-        where: { id: this.id },
-        select: { status_id: true },
-      });
+    const msgData = await database.findFirst<IMessage>({
+      table: 'messages',
+      where: { id: this.id },
+      select: { status_id: true },
+    });
 
-      if (msgData) {
-        if (msgData.status_id !== this.statusId) {
-          await database.updateIntoTable({
-            table: 'messages',
-            dataDict: { status_id: this.statusId, body: this.body },
-            where: { id: this.id },
-          });
-        }
-      } else {
-        await database.insertIntoTable({
+    if (msgData) {
+      if (msgData.status_id !== this.statusId) {
+        await database.updateIntoTable({
           table: 'messages',
-          dataDict: {
-            id: this.id,
-            type: this.type,
-            body: this.body,
-            from_me: this.fromMe,
-            status_id: this.statusId,
-            chat_id: this.chatId,
-            from_id: this.fromId,
-            media_id: this.mediaId,
-            created_at: this.createdAt,
-          },
+          dataDict: { status_id: this.statusId, body: this.body },
+          where: { id: this.id },
         });
       }
-      this.isSaved = true;
+    } else {
+      await database.insertIntoTable({
+        table: 'messages',
+        dataDict: {
+          id: this.id,
+          type: this.type,
+          body: this.body,
+          from_me: this.fromMe,
+          status_id: this.statusId,
+          chat_id: this.chatId,
+          from_id: this.fromId,
+          media_id: this.mediaId,
+          created_at: this.createdAt,
+        },
+      });
     }
-    return this.isSaved;
   }
 
   public async destroy() {

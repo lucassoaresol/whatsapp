@@ -7,14 +7,12 @@ class RepoVote {
     private selectedName: string,
     private chatId: string,
     private clientId: string,
-  ) {}
+  ) { }
 
   public async save() {
     const vote = new Vote(this);
 
-    this.isSaved = await vote.process();
-
-    return this.isSaved;
+    await vote.process();
   }
 
   public getData() {

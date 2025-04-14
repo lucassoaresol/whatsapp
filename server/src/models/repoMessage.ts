@@ -4,8 +4,6 @@ import { ClientManagerPromise } from './clientManager';
 import Message from './message';
 
 class RepoMessage {
-  private isSaved = false;
-
   constructor(
     private statusId: number,
     private msgId: string,
@@ -16,7 +14,7 @@ class RepoMessage {
   public async save() {
     const message = new Message(this);
 
-    this.isSaved = await message.save();
+    await message.save();
 
     await chatQueue.add(
       'save-chat',
@@ -26,8 +24,6 @@ class RepoMessage {
       },
       { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
     );
-
-    return this.isSaved;
   }
 
   public async getClientWPP() {
