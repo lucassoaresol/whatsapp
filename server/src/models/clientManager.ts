@@ -4,9 +4,20 @@ import databasePromise from '../libs/database';
 import Client from './client';
 
 class ClientManager {
+  private static instance: ClientManager;
   private clients: Map<string, Client> = new Map();
 
-  public async loadDataFromDatabase() {
+  private constructor() {}
+
+  public static async getInstance(): Promise<ClientManager> {
+    if (!ClientManager.instance) {
+      ClientManager.instance = new ClientManager();
+    }
+    await ClientManager.instance.loadDataFromDatabase();
+    return ClientManager.instance;
+  }
+
+  private async loadDataFromDatabase() {
     try {
       const database = await databasePromise;
 
@@ -60,14 +71,14 @@ class ClientManager {
   }
 }
 
-let instance: ClientManager | null = null;
-
-export const getClientManager = async (): Promise<ClientManager> => {
-  if (!instance) {
-    instance = new ClientManager();
-    await instance.loadDataFromDatabase();
+export const ClientManagerPromise: Promise<ClientManager> = (async () => {
+  try {
+    const clientsManager = await ClientManager.getInstance();
+    return clientsManager;
+  } catch (error) {
+    console.error('Erro ao inicializar o banco de dados:', error);
+    throw error;
   }
-  return instance;
-};
+})();
 
 export default ClientManager;

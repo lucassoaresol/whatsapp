@@ -46,7 +46,7 @@ FROM
 JOIN
     chats c ON cc.chat_id = c.id
 JOIN
-    messages m ON m.chat_id = cc."key"
+    messages m ON m.chat_id = cc."id"
 JOIN
     status_types s ON s.id = m.status_id
 LEFT JOIN
@@ -148,7 +148,7 @@ chatRouter.get('/:chat_id/messages', async (req: Request, res: Response) => {
 FROM
     clients_chats cc
 JOIN
-    messages m ON m.chat_id = cc."key"
+    messages m ON m.chat_id = cc."id"
 JOIN
     status_types s ON s.id = m.status_id
 LEFT JOIN

@@ -24,14 +24,7 @@ clientRouter.get('/:id/status', verifyClient, (req: Request, res: Response) => {
 });
 
 clientRouter.get('/:id/qr', verifyClient, async (req: Request, res: Response) => {
-  const timeQR = req.client.getRemainingTimeForNextQR();
-  if (timeQR >= 25000) {
-    res.redirect(`/static/qr/${req.params.id}_qr.png`);
-  } else {
-    setTimeout(() => {
-      res.redirect(`/static/qr/${req.params.id}_qr.png`);
-    }, timeQR);
-  }
+  res.redirect(`/static/qr/${req.params.id}_qr.png`);
 });
 
 export default clientRouter;
