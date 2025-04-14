@@ -7,9 +7,11 @@
   "scripts": {
     "build": "tsup src",
     "db": "pnpm pg-utils create && pnpm pg-utils migrate && tsx src/utils/databaseInit.ts",
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch src/api/index.ts",
     "lint": "eslint src/**/*.ts --fix",
-    "start": "node dist/index.cjs",
+    "start": "node dist/api/index.cjs",
+    "worker": "node dist/worker/index.cjs",
+    "cron": "node dist/cron/index.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -18,19 +20,19 @@
   "dependencies": {
     "bullmq": "^5.21.2",
     "cors": "2.8.5",
-    "cron": "3.1.7",
+    "cron": "4.1.4",
     "dayjs": "1.11.13",
-    "dotenv": "16.4.5",
-    "express": "4.21.1",
-    "mime-types": "^2.1.35",
+    "dotenv": "16.5.0",
+    "express": "5.1.0",
+    "mime-types": "^3.0.1",
     "pg-utils": "github:lucassoaresol/pg-utils",
     "qrcode": "1.5.4",
-    "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js",
-    "zod": "3.23.8"
+    "whatsapp-web.js": "^1.27.0",
+    "zod": "3.24.2"
   },
   "devDependencies": {
     "@types/cors": "2.8.17",
-    "@types/express": "^5.0.0",
+    "@types/express": "^5.0.1",
     "@types/mime-types": "^2.1.4",
     "@types/qrcode": "1.5.5",
     "@typescript-eslint/eslint-plugin": "8.6.0",
@@ -40,8 +42,8 @@
     "eslint-import-resolver-typescript": "3.6.3",
     "eslint-plugin-import": "2.30.0",
     "eslint-plugin-prettier": "5.2.1",
-    "tsup": "8.3.0",
-    "tsx": "4.19.1",
+    "tsup": "8.4.0",
+    "tsx": "4.19.3",
     "typescript": "5.2.2"
   }
 }
