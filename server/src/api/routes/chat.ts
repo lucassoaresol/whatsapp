@@ -1,5 +1,7 @@
 import { Request, Response, Router } from 'express';
+import { GroupParticipant } from 'whatsapp-web.js';
 
+import { IChatWpp } from '../../interfaces/chat';
 import databasePromise from '../../libs/database';
 import { formatDate } from '../../utils/formatDate';
 import { listChatByClientId } from '../../utils/listChatByClientId';
@@ -116,6 +118,45 @@ ORDER BY
 });
 
 chatRouter.get('/:chat_id/wpp', async (req: Request, res: Response) => {
+  const clientWpp = req.client.getWpp();
+  const id = req.params.chat_id;
+  const chat = await clientWpp.getChatById(id);
+
+  const { name, isGroup, unreadCount } = chat;
+
+  const chatData: IChatWpp = {
+    id,
+    name,
+    isGroup,
+    unreadCount,
+  };
+
+  const contact = await clientWpp.getContactById(id);
+  chatData.profilePicUrl = await contact.getProfilePicUrl();
+  if (!isGroup) {
+    chatData.name = contact.pushname;
+  }
+
+  if (!name) {
+    chatData.name = contact.name || contact.number;
+  }
+
+  if (isGroup) {
+    const chatGroupWpp = chat as unknown as {
+      groupMetadata: { participants: GroupParticipant[] };
+    };
+
+    if (chatGroupWpp.groupMetadata.participants) {
+      chatData.participants = chatGroupWpp.groupMetadata.participants.map(
+        (ct) => ct.id._serialized,
+      );
+    }
+  }
+
+  res.json(chatData);
+});
+
+chatRouter.get('/:chat_id/wpp/messages', async (req: Request, res: Response) => {
   const clientWpp = req.client.getWpp();
   const chat = await clientWpp.getChatById(req.params.chat_id);
 

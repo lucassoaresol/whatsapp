@@ -1,136 +1,135 @@
-import mime from 'mime-types';
+import { Database } from 'pg-utils';
 
 import { IClientChatWithChat } from '../interfaces/chat';
 import { IMedia } from '../interfaces/media';
 import { IMessage } from '../interfaces/message';
+import {
+  retriveMessageContactWpp,
+  retriveMessageMediaWpp,
+  retriveMessageWpp,
+} from '../libs/axios';
 import databasePromise from '../libs/database';
 import dayLib from '../libs/dayjs';
 import { chatQueue } from '../worker/services/chat';
 
 import Media from './media';
-import RepoMessage from './repoMessage';
 
 class Message {
   private id!: string;
   private type!: string;
   private body!: string;
   private fromMe!: boolean;
-  private statusId!: number;
   private chatId!: number;
   private fromId?: string;
   private mediaId?: number;
   private createdAt!: string;
+  private database!: Database;
 
-  constructor(private repoMessage: RepoMessage) {}
+  constructor(
+    private statusId: number,
+    private msgId: string,
+    private chatIdWpp: string,
+    private clientId: string,
+  ) {}
 
   private async getMessageData() {
-    const database = await databasePromise;
-    const dataRepo = this.repoMessage.getData();
+    this.database = await databasePromise;
 
-    const dataMsg = await database.findFirst<IMessage>({
+    const dataMsg = await this.database.findFirst<IMessage>({
       table: 'messages',
-      where: { id: dataRepo.msgId },
+      where: { id: this.msgId },
       select: { id: true, media_id: true },
     });
 
-    if (dataRepo.statusId === 6 && dataMsg) {
-      this.id = dataMsg.id;
-      this.mediaId = dataMsg.media_id;
-      await this.destroy();
-    } else if (!dataMsg) {
-      const clientWpp = await this.repoMessage.getClientWPP();
-      if (clientWpp) {
-        const today = dayLib();
-        const msg = await clientWpp.getMessageById(dataRepo.msgId);
-        if (msg) {
-          const timestamp = dayLib(msg.timestamp * 1000).format(
-            'YYYY-MM-DD HH:mm:ss.SSS',
-          );
-          if (timestamp !== 'Invalid Date') {
-            this.id = dataRepo.msgId;
-            this.statusId = dataRepo.statusId;
-            this.type = msg.type;
-            this.body = msg.body;
-            this.fromMe = msg.fromMe;
-            this.createdAt = timestamp;
+    if (this.statusId === 6) {
+      if (dataMsg) {
+        this.id = dataMsg.id;
+        this.mediaId = dataMsg.media_id;
+        await this.destroy();
+      }
+    } else {
+      const today = dayLib();
+      const msg = await retriveMessageWpp(this.clientId, this.msgId);
+      if (msg) {
+        if (msg.timestamp) {
+          this.id = this.msgId;
+          this.type = msg.type;
+          this.body = msg.body;
+          this.fromMe = msg.fromMe;
+          this.createdAt = msg.timestamp;
 
-            const chatData = await database.findFirst<IClientChatWithChat>({
-              table: 'clients_chats',
-              where: { client_id: dataRepo.clientId, chat_id: dataRepo.chatId },
-              joins: [{ table: 'chats', alias: 'c', on: { chat_id: 'id' } }],
-              select: { id: true, 'c.is_group': true },
-            });
+          const chatData = await this.database.findFirst<IClientChatWithChat>({
+            table: 'clients_chats',
+            where: { client_id: this.clientId, chat_id: this.chatIdWpp },
+            joins: [{ table: 'chats', alias: 'c', on: { chat_id: 'id' } }],
+            select: { id: true, 'c.is_group': true },
+          });
 
-            if (chatData) {
-              this.chatId = chatData.id;
+          if (chatData) {
+            this.chatId = chatData.id;
 
-              if (chatData.c_is_group && !msg.fromMe) {
-                const from = await msg.getContact();
-                this.fromId = from.id._serialized;
+            if (chatData.c_is_group && !msg.fromMe) {
+              const from = await retriveMessageContactWpp(this.clientId, this.msgId);
+              this.fromId = from.id;
 
-                const chatFrom = await database.findFirst({
-                  table: 'chats',
-                  where: { id: this.fromId },
-                  select: { id: true },
-                });
+              const chatFrom = await this.database.findFirst({
+                table: 'chats',
+                where: { id: this.fromId },
+                select: { id: true },
+              });
 
-                if (!chatFrom) {
-                  await chatQueue.add(
-                    'save-chat',
-                    {
-                      chat_id: this.fromId,
-                      client_id: dataRepo.clientId,
-                      group_id: dataRepo.chatId,
-                    },
-                    { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
-                  );
-                }
-              }
-
-              if (msg.hasMedia) {
-                const media = await msg.downloadMedia();
-                if (media) {
-                  const mimeType = media.mimetype;
-                  const extension = mime.extension(mimeType);
-                  const fileName = `${dataRepo.clientId}_${Date.now()}.${extension}`;
-                  const path = `media/${fileName}`;
-                  const mediaData = new Media(mimeType, media.data, path);
-                  this.mediaId = await mediaData.save();
-                  if (today.diff(timestamp, 'd') <= 10) {
-                    await mediaData.down();
-                  }
-                } else {
-                  this.statusId = 7;
-                }
+              if (!chatFrom) {
+                await chatQueue.add(
+                  'save-chat',
+                  {
+                    chat_id: this.fromId,
+                    client_id: this.clientId,
+                    group_id: this.chatIdWpp,
+                  },
+                  { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+                );
               }
             }
+
+            if (msg.hasMedia) {
+              const media = await retriveMessageMediaWpp(this.clientId, this.msgId);
+              if (media) {
+                const { data, fileName, mimeType } = media;
+                const path = `media/${fileName}`;
+                const mediaData = new Media(mimeType, data, path);
+                this.mediaId = await mediaData.save();
+                if (today.diff(msg.timestamp, 'd') <= 10) {
+                  await mediaData.down();
+                }
+              } else {
+                this.statusId = 7;
+              }
+            }
+          } else {
             throw new Error('chat not found');
           }
         }
       }
-      throw new Error('client wpp not found');
     }
   }
 
   public async save() {
-    const [database] = await Promise.all([databasePromise, this.getMessageData()]);
+    await this.getMessageData();
 
-    const msgData = await database.findFirst<IMessage>({
+    const msgData = await this.database.findFirst<IMessage>({
       table: 'messages',
       where: { id: this.id },
       select: { status_id: true },
     });
 
     if (msgData) {
-      if (msgData.status_id !== this.statusId) {
-        await database.updateIntoTable({
-          table: 'messages',
-          dataDict: { status_id: this.statusId, body: this.body },
-          where: { id: this.id },
-        });
-      }
-    } else {
-      await database.insertIntoTable({
+      await this.database.updateIntoTable({
+        table: 'messages',
+        dataDict: { status_id: this.statusId, body: this.body },
+        where: { id: this.id },
+      });
+    } else if (this.statusId !== 6) {
+      await this.database.insertIntoTable({
         table: 'messages',
         dataDict: {
           id: this.id,
@@ -147,10 +146,9 @@ class Message {
     }
   }
 
-  public async destroy() {
-    const database = await databasePromise;
+  private async destroy() {
     if (this.mediaId) {
-      const mediaData = await database.findFirst<IMedia>({
+      const mediaData = await this.database.findFirst<IMedia>({
         table: 'medias',
         where: { id: this.mediaId, is_down: true },
       });
@@ -165,9 +163,11 @@ class Message {
 
         await media.destroy();
       }
-    } else {
-      await database.deleteFromTable({ table: 'messages', where: { id: this.id } });
     }
+    await this.database.deleteFromTable({
+      table: 'messages',
+      where: { id: this.id },
+    });
   }
 }
 

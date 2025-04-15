@@ -1,4 +1,5 @@
 import { Request, Response, Router } from 'express';
+import mime from 'mime-types';
 import Whatsapp from 'whatsapp-web.js';
 
 import dayLib from '../../libs/dayjs';
@@ -79,9 +80,55 @@ messageRouter.get('', async (req: Request, res: Response) => {
 
 messageRouter.get('/:msg_id', async (req: Request, res: Response) => {
   const client = req.client.getWpp();
-  const message = await client.getMessageById(req.params.msg_id);
+  const id = req.params.msg_id;
+  const message = await client.getMessageById(id);
 
-  res.json(message);
+  if (message) {
+    const timestamp =
+      dayLib(message.timestamp * 1000).format('YYYY-MM-DD HH:mm:ss.SSS') ===
+        'Invalid Date'
+        ? undefined
+        : dayLib(message.timestamp * 1000).format('YYYY-MM-DD HH:mm:ss.SSS');
+
+    res.json({
+      id,
+      timestamp,
+      type: message.type,
+      body: message.body,
+      fromMe: message.fromMe,
+      hasMedia: message.hasMedia,
+    });
+  }
+
+  res.status(404).json('message not found');
+});
+
+messageRouter.get('/:msg_id/contact', async (req: Request, res: Response) => {
+  const client = req.client.getWpp();
+  const id = req.params.msg_id;
+  const message = await client.getMessageById(id);
+
+  const contact = await message.getContact();
+
+  res.json({ ...contact, id: contact.id._serialized });
+});
+
+messageRouter.get('/:msg_id/media', async (req: Request, res: Response) => {
+  const client = req.client.getWpp();
+  const id = req.params.msg_id;
+  const message = await client.getMessageById(id);
+
+  const media = await message.downloadMedia();
+
+  if (media) {
+    const mimeType = media.mimetype;
+    const extension = mime.extension(mimeType);
+    const fileName = `${req.client.getInfo().id}_${Date.now()}.${extension}`;
+
+    res.json({ mimeType, fileName, data: media.data });
+  } else {
+    res.status(404).json('media not found');
+  }
 });
 
 messageRouter.patch('/:msg_id', async (req: Request, res: Response) => {

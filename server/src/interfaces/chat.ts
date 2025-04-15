@@ -43,3 +43,12 @@ export interface IGroup {
   group_id: string;
   chat_id: string;
 }
+
+export interface IChatWpp {
+  id: string;
+  name: string;
+  isGroup: boolean;
+  unreadCount: number;
+  profilePicUrl?: string;
+  participants?: string[];
+}

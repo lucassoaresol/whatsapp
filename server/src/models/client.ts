@@ -14,10 +14,6 @@ class Client {
 
   private id: string;
 
-  private qrGeneratedAt: number | null = null;
-
-  private qrInterval = 30000;
-
   private isReady = false;
 
   constructor(id: string) {
@@ -50,10 +46,10 @@ class Client {
       console.log('Chats loaded from database.');
     });
 
-    this.wpp.on('qr', async (qr) => {
-      this.qrGeneratedAt = Date.now();
-      await QRCode.toFile(`public/qr/${this.id}_qr.png`, qr);
-    });
+    this.wpp.on(
+      'qr',
+      async (qr) => await QRCode.toFile(`public/qr/${this.id}_qr.png`, qr),
+    );
 
     this.wpp.on('authenticated', () => console.log(`Client ${this.id} authenticated`));
 
@@ -87,7 +83,9 @@ class Client {
 
   public async loadChats() {
     const clientWpp = this.getWpp();
-    const chats = await clientWpp.getChats();
+    let chats = await clientWpp.getChats();
+
+    chats = chats.filter((ch) => ch.id._serialized.length > 7);
 
     await Promise.all([
       chats.map(async (ch) => {
@@ -105,57 +103,56 @@ class Client {
 
   private async saveMessage(messageData: Whatsapp.Message, statusId: number) {
     const chatId = messageData.id.remote;
-    const msgId = messageData.id._serialized;
-
-    await Promise.all([
-      chatQueue.add(
-        'save-chat',
-        {
-          chat_id: chatId,
-          client_id: this.id,
-        },
-        { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
-      ),
-      messageQueue.add(
-        'save-message',
-        {
-          status_id: statusId,
-          msg_id: msgId,
-          chat_id: chatId,
-          client_id: this.id,
-        },
-        { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
-      ),
-    ]);
+    if (chatId.length > 7) {
+      const msgId = messageData.id._serialized;
+      await Promise.all([
+        chatQueue.add(
+          'save-chat',
+          {
+            chat_id: chatId,
+            client_id: this.id,
+          },
+          { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+        ),
+        messageQueue.add(
+          'save-message',
+          {
+            status_id: statusId,
+            msg_id: msgId,
+            chat_id: chatId,
+            client_id: this.id,
+          },
+          { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+        ),
+      ]);
+    }
   }
 
   private async saveVote(voteData: Whatsapp.PollVote) {
     const selectedName = voteData.selectedOptions.at(0)?.name || '';
     const chatId = voteData.voter;
 
-    await Promise.all([
-      chatQueue.add(
-        'save-chat',
-        {
-          chat_id: chatId,
-          client_id: this.id,
-        },
-        { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
-      ),
-      voteQueue.add(
-        'save-vote',
-        {
-          chat_id: chatId,
-          client_id: this.id,
-          selected_name: selectedName,
-        },
-        { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
-      ),
-    ]);
-  }
-
-  public getRemainingTimeForNextQR(): number | null {
-    return this.qrGeneratedAt;
+    if (chatId.length > 7) {
+      await Promise.all([
+        chatQueue.add(
+          'save-chat',
+          {
+            chat_id: chatId,
+            client_id: this.id,
+          },
+          { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+        ),
+        voteQueue.add(
+          'save-vote',
+          {
+            chat_id: chatId,
+            client_id: this.id,
+            selected_name: selectedName,
+          },
+          { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+        ),
+      ]);
+    }
   }
 
   public async save() {

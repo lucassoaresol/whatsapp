@@ -1,34 +1,23 @@
+import { Database } from 'pg-utils';
+
 import { IClientChatWithChat } from '../interfaces/chat';
 import databasePromise from '../libs/database';
 
-import RepoVote from './repoVote';
-
 class Vote {
-  private selectedName!: string;
-  private chatId!: number;
+  private database!: Database;
 
-  constructor(private repoVote: RepoVote) { }
+  constructor(
+    private selectedName: string,
+    private chatId: string,
+    private clientId: string,
+  ) {}
 
   public async save() {
-    const database = await databasePromise;
+    this.database = await databasePromise;
 
-    await database.insertIntoTable({
-      table: 'votes',
-      dataDict: {
-        selected_name: this.selectedName,
-        chat_id: this.chatId,
-      },
-    });
-  }
-
-  public async process() {
-    const database = await databasePromise;
-    const dataRepo = this.repoVote.getData();
-    this.selectedName = dataRepo.selectedName;
-
-    const chatData = await database.findFirst<IClientChatWithChat>({
+    const chatData = await this.database.findFirst<IClientChatWithChat>({
       table: 'clients_chats',
-      where: { client_id: dataRepo.clientId, chat_id: dataRepo.chatId },
+      where: { client_id: this.clientId, chat_id: this.chatId },
       joins: [
         {
           table: 'chats',
@@ -36,15 +25,20 @@ class Vote {
           on: { chat_id: 'id' },
         },
       ],
-      select: { id: true, 'c.is_group': true },
+      select: { id: true },
     });
 
     if (chatData) {
-      this.chatId = chatData.id;
-      await this.save();
+      await this.database.insertIntoTable({
+        table: 'votes',
+        dataDict: {
+          selected_name: this.selectedName,
+          chat_id: chatData.id,
+        },
+      });
+    } else {
+      throw new Error('chat not found');
     }
-
-    throw new Error('chat not found');
   }
 }
 

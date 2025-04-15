@@ -16,3 +16,12 @@ export interface IRepoMessage {
   chat_id: string;
   client_id: string;
 }
+
+export interface IMessageWpp {
+  id: string;
+  timestamp?: string;
+  type: string;
+  body: string;
+  fromMe: boolean;
+  hasMedia: boolean;
+}

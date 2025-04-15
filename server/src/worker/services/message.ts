@@ -1,7 +1,7 @@
 import { Queue, Worker } from 'bullmq';
 
 import { IRepoMessage } from '../../interfaces/message';
-import RepoMessage from '../../models/repoMessage';
+import Message from '../../models/message';
 
 export const messageQueue = new Queue<IRepoMessage>('message-queue', {
   connection: {},
@@ -11,7 +11,7 @@ export const messageQueue = new Queue<IRepoMessage>('message-queue', {
 export const messageWorker = new Worker<IRepoMessage>(
   'message-queue',
   async (job) => {
-    const repoMessage = new RepoMessage(
+    const repoMessage = new Message(
       job.data.status_id,
       job.data.msg_id,
       job.data.chat_id,

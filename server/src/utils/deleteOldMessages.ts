@@ -1,7 +1,7 @@
 import { IRepoMessage } from '../interfaces/message';
 import databasePromise from '../libs/database';
 import dayLib from '../libs/dayjs';
-import RepoMessage from '../models/repoMessage';
+import Message from '../models/message';
 
 export async function deleteOldMessages(daysBack = 5) {
   const database = await databasePromise;
@@ -20,7 +20,7 @@ export async function deleteOldMessages(daysBack = 5) {
 
   await Promise.all(
     messages.map(async (msg) => {
-      const repoMsg = new RepoMessage(7, msg.msg_id, msg.chat_id, msg.client_id);
+      const repoMsg = new Message(7, msg.msg_id, msg.chat_id, msg.client_id);
       return await repoMsg.save();
     }),
   );

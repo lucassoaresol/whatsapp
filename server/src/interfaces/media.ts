@@ -5,3 +5,9 @@ export interface IMedia {
   path: string;
   is_down: boolean;
 }
+
+export interface IMediaWpp {
+  mimeType: string;
+  fileName: string;
+  data: string;
+}
