@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { exec } from 'node:child_process';
 
 export function cleanOldFiles(directory: string) {
   const command = `find ${directory} -type f -mtime +5 -exec rm {} \\;`;
