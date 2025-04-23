@@ -98,6 +98,7 @@ messageRouter.get('/:msg_id', async (req: Request, res: Response) => {
       fromMe: message.fromMe,
       hasMedia: message.hasMedia,
     });
+    return;
   }
 
   res.status(404).json('message not found');
@@ -126,9 +127,9 @@ messageRouter.get('/:msg_id/media', async (req: Request, res: Response) => {
     const fileName = `${req.client.getInfo().id}_${Date.now()}.${extension}`;
 
     res.json({ mimeType, fileName, data: media.data });
-  } else {
-    res.status(404).json('media not found');
+    return;
   }
+  res.status(404).json('media not found');
 });
 
 messageRouter.patch('/:msg_id', async (req: Request, res: Response) => {

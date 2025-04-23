@@ -3,7 +3,6 @@ import { Database } from 'pg-utils';
 import { IChat, IClientChat, IGroup } from '../interfaces/chat';
 import { retriveChatWpp } from '../libs/axios';
 import databasePromise from '../libs/database';
-import dayLib from '../libs/dayjs';
 import { chatQueue } from '../worker/services/chat';
 
 class Chat {
@@ -97,7 +96,7 @@ class Chat {
     if (chatWpp) {
       const { id, isGroup, name, unreadCount, participants, profilePicUrl } = chatWpp;
       this.id = id;
-      this.name = name;
+      this.name = name || '';
       this.isGroup = isGroup;
       this.unreadCount = unreadCount;
       this.profilePicUrl = profilePicUrl;
