@@ -18,25 +18,25 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@bull-board/api": "^6.9.1",
-    "@bull-board/express": "^6.9.1",
-    "axios": "^1.8.4",
-    "bullmq": "^5.21.2",
+    "@bull-board/api": "6.9.6",
+    "@bull-board/express": "6.9.6",
+    "axios": "1.9.0",
+    "bullmq": "5.52.2",
     "cors": "2.8.5",
-    "cron": "4.1.4",
+    "cron": "4.3.0",
     "dayjs": "1.11.13",
     "dotenv": "16.5.0",
     "express": "5.1.0",
-    "mime-types": "^3.0.1",
+    "mime-types": "3.0.1",
     "pg-utils": "github:lucassoaresol/pg-utils",
     "qrcode": "1.5.4",
-    "whatsapp-web.js": "^1.27.0",
-    "zod": "3.24.2"
+    "whatsapp-web.js": "1.28.0",
+    "zod": "3.24.4"
   },
   "devDependencies": {
-    "@types/cors": "2.8.17",
-    "@types/express": "^5.0.1",
-    "@types/mime-types": "^2.1.4",
+    "@types/cors": "2.8.18",
+    "@types/express": "5.0.1",
+    "@types/mime-types": "2.1.4",
     "@types/qrcode": "1.5.5",
     "@typescript-eslint/eslint-plugin": "8.6.0",
     "@typescript-eslint/parser": "8.6.0",
@@ -46,7 +46,7 @@
     "eslint-plugin-import": "2.30.0",
     "eslint-plugin-prettier": "5.2.1",
     "tsup": "8.4.0",
-    "tsx": "4.19.3",
+    "tsx": "4.19.4",
     "typescript": "5.2.2"
   }
 }
