@@ -1,16 +1,20 @@
 import { Request, Response, Router } from 'express';
 
+import { ClientManagerPromise } from '../../models/clientManager.js';
+
 import verifyClient from '../middlewares/verifyClient.js';
 
 const clientRouter = Router();
 
 clientRouter.post('', async (req: Request, res: Response) => {
-  await req.clientManager.addClient(req.body.id);
+  const clientManager = await ClientManagerPromise;
+  await clientManager.addClient(req.body.id);
   res.status(201).json('sucess');
 });
 
 clientRouter.get('', async (req: Request, res: Response) => {
-  const clients = await req.clientManager.listClients();
+  const clientManager = await ClientManagerPromise;
+  const clients = await clientManager.listClients();
   res.json(clients);
 });
 
