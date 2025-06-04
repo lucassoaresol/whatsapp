@@ -171,7 +171,7 @@ class Client {
       isReady: this.isReady,
     };
 
-    if (this.wpp.info) return { ...result, ...this.wpp.info };
+    if (this.wpp.info) { return { ...result, ...this.wpp.info }; }
 
     return result;
   }

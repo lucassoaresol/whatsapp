@@ -7,7 +7,7 @@ class ClientManager {
   private static instance: ClientManager;
   private clients: Map<string, Client> = new Map();
 
-  private constructor() {}
+  private constructor() { }
 
   public static async getInstance(): Promise<ClientManager> {
     if (!ClientManager.instance) {
@@ -41,7 +41,7 @@ class ClientManager {
     const client = new Client(id);
     this.clients.set(id, client);
     await client.start();
-    if (save) await client.save();
+    if (save) { await client.save(); }
     console.log(`Client with ID ${id} has been added and started.`);
   }
 

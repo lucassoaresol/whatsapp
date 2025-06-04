@@ -1,5 +1,5 @@
 {
-  "name": "server",
+  "name": "whatsapp-server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -21,32 +21,29 @@
     "@bull-board/api": "6.9.6",
     "@bull-board/express": "6.9.6",
     "axios": "1.9.0",
-    "bullmq": "5.52.2",
+    "bullmq": "5.53.2",
     "cors": "2.8.5",
-    "cron": "4.3.0",
+    "cron": "4.3.1",
     "dayjs": "1.11.13",
     "dotenv": "16.5.0",
     "express": "5.1.0",
     "mime-types": "3.0.1",
     "pg-utils": "github:lucassoaresol/pg-utils",
     "qrcode": "1.5.4",
-    "whatsapp-web.js": "1.28.0",
-    "zod": "3.24.4"
+    "whatsapp-web.js": "1.30.0",
+    "zod": "3.25.51"
   },
   "devDependencies": {
+    "@eslint/js": "9.28.0",
     "@types/cors": "2.8.18",
-    "@types/express": "5.0.1",
-    "@types/mime-types": "2.1.4",
+    "@types/express": "5.0.2",
+    "@types/mime-types": "3.0.0",
     "@types/qrcode": "1.5.5",
-    "@typescript-eslint/eslint-plugin": "8.6.0",
-    "@typescript-eslint/parser": "8.6.0",
-    "eslint": "8.57.0",
-    "eslint-config-prettier": "9.1.0",
-    "eslint-import-resolver-typescript": "3.6.3",
-    "eslint-plugin-import": "2.30.0",
-    "eslint-plugin-prettier": "5.2.1",
-    "tsup": "8.4.0",
+    "eslint": "9.28.0",
+    "globals": "16.2.0",
+    "tsup": "8.5.0",
     "tsx": "4.19.4",
-    "typescript": "5.2.2"
+    "typescript": "5.8.3",
+    "typescript-eslint": "8.33.1"
   }
 }
