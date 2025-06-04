@@ -4,15 +4,11 @@ import { ExpressAdapter } from '@bull-board/express';
 import cors from 'cors';
 import express from 'express';
 
-import { ClientManagerPromise } from '../models/clientManager.js';
 import { chatQueue } from '../worker/services/chat.js';
 import { messageQueue } from '../worker/services/message.js';
 import { voteQueue } from '../worker/services/vote.js';
 
-import verifyClient from './middlewares/verifyClient.js';
-import verifyClientConnect from './middlewares/verifyClientConnect.js';
-import clientRouter from './routes/client.js';
-import clientManagerRouter from './routes/clientManager.js';
+import router from './routes';
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
@@ -32,14 +28,6 @@ app.use(cors());
 app.use(express.json());
 app.use('/admin/queues', serverAdapter.getRouter());
 app.use('/static', express.static('public'));
-
-app.use(async (req, res, next) => {
-  const clientManager = await ClientManagerPromise;
-  req.clientManager = clientManager;
-  next();
-});
-
-app.use('/clients', clientRouter);
-app.use('/:id', verifyClient, verifyClientConnect, clientManagerRouter);
+app.use(router);
 
 export default app;
