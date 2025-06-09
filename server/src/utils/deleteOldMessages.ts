@@ -1,10 +1,10 @@
 import { IRepoMessage } from '../interfaces/message';
-import databasePromise from '../libs/database';
+import databaseWhatsappPromise from '../db/whatsapp';
 import dayLib from '../libs/dayjs';
 import Message from '../models/message';
 
 export async function deleteOldMessages(daysBack = 5) {
-  const database = await databasePromise;
+  const database = await databaseWhatsappPromise;
   const dateRef = dayLib().subtract(daysBack, 'day').format('YYYY-MM-DD HH:mm:ss.SSS');
 
   const messages = await database.findMany<IRepoMessage>({

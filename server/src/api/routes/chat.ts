@@ -1,11 +1,11 @@
-import { Request, Response, Router } from 'express';
 import { GroupParticipant } from 'whatsapp-web.js';
+import { Request, Response, Router } from 'express';
 
-import { IChatWpp } from '../../interfaces/chat';
-import databasePromise from '../../libs/database';
 import { formatDate } from '../../utils/formatDate';
+import { IChatWpp } from '../../interfaces/chat';
 import { listChatByClientId } from '../../utils/listChatByClientId';
 import { listParticipants } from '../../utils/listParticipants';
+import databaseWhatsappPromise from '../../db/whatsapp';
 
 const chatRouter = Router();
 
@@ -18,7 +18,7 @@ chatRouter.get('', async (req: Request, res: Response) => {
 });
 
 chatRouter.get('/:chat_id', async (req: Request, res: Response) => {
-  const database = await databasePromise;
+  const database = await databaseWhatsappPromise;
   const clientId = req.client.getInfo().id;
   const chatId = req.params.chat_id;
 
@@ -166,7 +166,7 @@ chatRouter.get('/:chat_id/wpp/messages', async (req: Request, res: Response) => 
 });
 
 chatRouter.get('/:chat_id/messages', async (req: Request, res: Response) => {
-  const database = await databasePromise;
+  const database = await databaseWhatsappPromise;
   const clientId = req.client.getInfo().id;
   const chatId = req.params.chat_id;
 

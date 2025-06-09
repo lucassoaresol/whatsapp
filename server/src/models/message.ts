@@ -1,16 +1,12 @@
 import { Database } from 'pg-utils';
 
+import { chatQueue } from '../worker/services/chat';
 import { IClientChatWithChat } from '../interfaces/chat';
 import { IMedia } from '../interfaces/media';
 import { IMessage } from '../interfaces/message';
-import {
-  retriveMessageContactWpp,
-  retriveMessageMediaWpp,
-  retriveMessageWpp,
-} from '../libs/axios';
-import databasePromise from '../libs/database';
+import { retriveMessageContactWpp, retriveMessageMediaWpp, retriveMessageWpp } from '../libs/axios';
+import databaseWhatsappPromise from '../db/whatsapp';
 import dayLib from '../libs/dayjs';
-import { chatQueue } from '../worker/services/chat';
 
 import Media from './media';
 
@@ -30,10 +26,10 @@ class Message {
     private msgId: string,
     private chatIdWpp: string,
     private clientId: string,
-  ) {}
+  ) { }
 
   private async getMessageData() {
-    this.database = await databasePromise;
+    this.database = await databaseWhatsappPromise;
 
     const dataMsg = await this.database.findFirst<IMessage>({
       table: 'messages',

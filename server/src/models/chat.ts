@@ -1,9 +1,9 @@
 import { Database } from 'pg-utils';
 
+import { chatQueue } from '../worker/services/chat';
 import { IChat, IClientChat, IGroup } from '../interfaces/chat';
 import { retriveChatWpp } from '../libs/axios';
-import databasePromise from '../libs/database';
-import { chatQueue } from '../worker/services/chat';
+import databaseWhatsappPromise from '../db/whatsapp';
 
 class Chat {
   private id!: string;
@@ -18,7 +18,7 @@ class Chat {
     private chatId: string,
     private clientId: string,
     private groupId?: string,
-  ) {}
+  ) { }
 
   private async addGroup(group_id: string, chat_id: string) {
     const group = await this.database.findFirst({
@@ -141,7 +141,7 @@ class Chat {
   }
 
   public async save() {
-    this.database = await databasePromise;
+    this.database = await databaseWhatsappPromise;
 
     const chatData = await this.database.findFirst<IChat>({
       table: 'chats',

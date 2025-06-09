@@ -1,8 +1,8 @@
-import databasePromise from '../libs/database';
+import databaseWhatsappPromise from '../db/whatsapp';
 
 async function databaseInit() {
   try {
-    const database = await databasePromise;
+    const database = await databaseWhatsappPromise;
 
     const STATUS_TYPES = [
       { id: 1, name: 'created' },

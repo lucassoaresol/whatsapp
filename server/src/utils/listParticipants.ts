@@ -1,7 +1,7 @@
-import databasePromise from '../libs/database';
+import databaseWhatsappPromise from '../db/whatsapp';
 
 export async function listParticipants(groupId: string) {
-  const database = await databasePromise;
+  const database = await databaseWhatsappPromise;
 
   const participants = await database.findMany({
     table: 'groups_chats',

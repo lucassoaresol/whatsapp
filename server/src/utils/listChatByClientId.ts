@@ -1,10 +1,10 @@
-import databasePromise from '../libs/database';
+import databaseWhatsappPromise from '../db/whatsapp';
 
 import { formatDate } from './formatDate';
 import { listParticipants } from './listParticipants';
 
 export async function listChatByClientId(clientId: string) {
-  const database = await databasePromise;
+  const database = await databaseWhatsappPromise;
 
   const chats = await database.query(
     `SELECT
@@ -70,19 +70,19 @@ ORDER BY
         status: { id: row.status_id, name: row.status_name },
         from: row.sender_id
           ? {
-              id: row.sender_id,
-              name: row.sender_name,
-              is_group: row.sender_is_group,
-              profile_pic_url: row.sender_profile_pic_url,
-            }
+            id: row.sender_id,
+            name: row.sender_name,
+            is_group: row.sender_is_group,
+            profile_pic_url: row.sender_profile_pic_url,
+          }
           : undefined,
         media: row.media_id
           ? {
-              id: row.media_id,
-              mime_type: row.media_mime_type,
-              path: row.media_path,
-              is_down: row.media_is_down,
-            }
+            id: row.media_id,
+            mime_type: row.media_mime_type,
+            path: row.media_path,
+            is_down: row.media_is_down,
+          }
           : undefined,
       },
       participants: row.is_group ? await listParticipants(row.chat_id) : undefined,

@@ -1,11 +1,11 @@
 import QRCode from 'qrcode';
 import Whatsapp, { MessageId } from 'whatsapp-web.js';
 
-import databasePromise from '../libs/database';
-import { listChatByClientId } from '../utils/listChatByClientId';
 import { chatQueue } from '../worker/services/chat';
+import { listChatByClientId } from '../utils/listChatByClientId';
 import { messageQueue } from '../worker/services/message';
 import { voteQueue } from '../worker/services/vote';
+import databaseWhatsappPromise from '../db/whatsapp';
 
 const { Client: ClientWpp, LocalAuth } = Whatsapp;
 
@@ -156,7 +156,7 @@ class Client {
   }
 
   public async save() {
-    const database = await databasePromise;
+    const database = await databaseWhatsappPromise;
 
     await database.insertIntoTable({ table: 'clients', dataDict: { id: this.id } });
   }

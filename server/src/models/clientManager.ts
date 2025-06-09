@@ -1,5 +1,5 @@
 import { IClient } from '../interfaces/client';
-import databasePromise from '../libs/database';
+import databaseWhatsappPromise from '../db/whatsapp';
 
 import Client from './client';
 
@@ -19,7 +19,7 @@ class ClientManager {
 
   private async loadDataFromDatabase() {
     try {
-      const database = await databasePromise;
+      const database = await databaseWhatsappPromise;
 
       const resultClient = await database.findMany<IClient>({ table: 'clients' });
       const clientIds = resultClient.map((row) => row.id);

@@ -1,7 +1,7 @@
 import { Database } from 'pg-utils';
 
 import { IClientChatWithChat } from '../interfaces/chat';
-import databasePromise from '../libs/database';
+import databaseWhatsappPromise from '../db/whatsapp';
 
 class Vote {
   private database!: Database;
@@ -10,10 +10,10 @@ class Vote {
     private selectedName: string,
     private chatId: string,
     private clientId: string,
-  ) {}
+  ) { }
 
   public async save() {
-    this.database = await databasePromise;
+    this.database = await databaseWhatsappPromise;
 
     const chatData = await this.database.findFirst<IClientChatWithChat>({
       table: 'clients_chats',

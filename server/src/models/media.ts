@@ -1,7 +1,7 @@
 import { unlink } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 
-import databasePromise from '../libs/database';
+import databaseWhatsappPromise from '../db/whatsapp';
 
 class Media {
   constructor(
@@ -9,10 +9,10 @@ class Media {
     private data: string,
     private path: string,
     private id?: number,
-  ) {}
+  ) { }
 
   public async save() {
-    const database = await databasePromise;
+    const database = await databaseWhatsappPromise;
 
     const imgDTO = await database.insertIntoTable({
       table: 'medias',
@@ -31,7 +31,7 @@ class Media {
       const fileName = `./public/${this.path}`;
 
       const [database] = await Promise.all([
-        databasePromise,
+        databaseWhatsappPromise,
         writeFile(fileName, this.data, { encoding: 'base64' }),
       ]);
 
@@ -50,7 +50,7 @@ class Media {
   public async remove() {
     const fileName = `./public/${this.path}`;
 
-    const database = await databasePromise;
+    const database = await databaseWhatsappPromise;
 
     unlink(fileName, async (err) => {
       if (err) {
@@ -69,7 +69,7 @@ class Media {
   public async destroy() {
     const fileName = `./public/${this.path}`;
 
-    const database = await databasePromise;
+    const database = await databaseWhatsappPromise;
 
     unlink(fileName, async (err) => {
       if (err) {
