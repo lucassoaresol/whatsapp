@@ -1,9 +1,9 @@
-import { Database } from 'pg-utils';
+import { Database } from "pg-utils";
 
-import { chatQueue } from '../worker/services/chat';
-import { IChat, IClientChat, IGroup } from '../interfaces/chat';
-import { retriveChatWpp } from '../libs/axios';
-import databaseWhatsappPromise from '../db/whatsapp';
+import databaseWhatsappPromise from "../db/whatsapp";
+import { IChat, IClientChat, IGroup } from "../interfaces/chat";
+import { retriveChatWpp } from "../libs/axios";
+import { chatQueue } from "../worker/services/chat";
 
 class Chat {
   private id!: string;
@@ -18,35 +18,35 @@ class Chat {
     private chatId: string,
     private clientId: string,
     private groupId?: string,
-  ) { }
+  ) {}
 
   private async addGroup(group_id: string, chat_id: string) {
     const group = await this.database.findFirst({
-      table: 'chats',
+      table: "chats",
       where: { id: group_id },
       select: { id: true },
     });
 
     if (group) {
       const groupChat = await this.database.findFirst<IGroup>({
-        table: 'groups_chats',
+        table: "groups_chats",
         where: { group_id, chat_id },
         select: { id: true },
       });
       if (!groupChat) {
         await this.database.insertIntoTable({
-          table: 'groups_chats',
+          table: "groups_chats",
           dataDict: { group_id, chat_id },
         });
       }
     } else {
-      throw new Error('group not found');
+      throw new Error("group not found");
     }
   }
 
   private async removeGroup(group_id: string, chat_id: string) {
     await this.database.deleteFromTable({
-      table: 'groups_chats',
+      table: "groups_chats",
       where: { group_id, chat_id },
     });
   }
@@ -55,7 +55,7 @@ class Chat {
     const participants = this.participants ? this.participants : [];
 
     const participantsData = await this.database.findMany<IGroup>({
-      table: 'groups_chats',
+      table: "groups_chats",
       where: { group_id: this.id },
       select: { chat_id: true },
     });
@@ -72,13 +72,13 @@ class Chat {
       addParticipants.map(
         async (aP) =>
           await chatQueue.add(
-            'save-chat',
+            "save-chat",
             {
               chat_id: aP,
               client_id: this.clientId,
               group_id: this.id,
             },
-            { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+            { attempts: 1000, backoff: { type: "exponential", delay: 5000 } },
           ),
       ),
     );
@@ -94,9 +94,10 @@ class Chat {
     const chatWpp = await retriveChatWpp(this.clientId, this.chatId);
 
     if (chatWpp) {
-      const { id, isGroup, name, unreadCount, participants, profilePicUrl } = chatWpp;
+      const { id, isGroup, name, unreadCount, participants, profilePicUrl } =
+        chatWpp;
       this.id = id;
-      this.name = name || '';
+      this.name = name || "";
       this.isGroup = isGroup;
       this.unreadCount = unreadCount;
       this.profilePicUrl = profilePicUrl;
@@ -106,7 +107,7 @@ class Chat {
         await this.getChatGroupData();
       }
     } else {
-      throw new Error('chat wpp not found');
+      throw new Error("chat wpp not found");
     }
   }
 
@@ -116,17 +117,18 @@ class Chat {
     if (chatData) {
       if (
         (this.name || this.profilePicUrl) &&
-        (chatData.name !== this.name || chatData.profile_pic_url !== this.profilePicUrl)
+        (chatData.name !== this.name ||
+          chatData.profile_pic_url !== this.profilePicUrl)
       ) {
         await this.database.updateIntoTable({
-          table: 'chats',
+          table: "chats",
           dataDict: { name: this.name, profile_pic_url: this.profilePicUrl },
           where: { id: this.id },
         });
       }
     } else {
       await this.database.insertIntoTable({
-        table: 'chats',
+        table: "chats",
         dataDict: {
           id: this.id,
           name: this.name,
@@ -141,44 +143,46 @@ class Chat {
   }
 
   public async save() {
-    this.database = await databaseWhatsappPromise;
+    if (this.chatId.endsWith("@c.us") || this.chatId.endsWith("@g.us")) {
+      this.database = await databaseWhatsappPromise;
 
-    const chatData = await this.database.findFirst<IChat>({
-      table: 'chats',
-      where: { id: this.chatId },
-      select: { name: true, profile_pic_url: true, updated_at: true },
-    });
+      const chatData = await this.database.findFirst<IChat>({
+        table: "chats",
+        where: { id: this.chatId },
+        select: { name: true, profile_pic_url: true, updated_at: true },
+      });
 
-    if (chatData) {
-      await this.process(chatData);
-      if (this.groupId) {
-        await this.addGroup(this.groupId, this.chatId);
+      if (chatData) {
+        await this.process(chatData);
+        if (this.groupId) {
+          await this.addGroup(this.groupId, this.chatId);
+        }
+      } else {
+        await this.process();
       }
-    } else {
-      await this.process();
-    }
 
-    if (!this.groupId) {
-      await this.saveClientChat();
+      if (!this.groupId) {
+        await this.saveClientChat();
+      }
     }
   }
 
   private async saveClientChat() {
     const clientChat = await this.database.findFirst<IClientChat>({
-      table: 'clients_chats',
+      table: "clients_chats",
       where: { client_id: this.clientId, chat_id: this.chatId },
       select: { id: true },
     });
 
     if (clientChat) {
       await this.database.updateIntoTable({
-        table: 'clients_chats',
+        table: "clients_chats",
         dataDict: { unread_count: this.unreadCount },
         where: { id: clientChat.id },
       });
     } else {
       await this.database.insertIntoTable({
-        table: 'clients_chats',
+        table: "clients_chats",
         dataDict: {
           client_id: this.clientId,
           chat_id: this.chatId,
