@@ -1,14 +1,18 @@
-import { Database } from 'pg-utils';
+import { Database } from "pg-utils";
 
-import { chatQueue } from '../worker/services/chat';
-import { IClientChatWithChat } from '../interfaces/chat';
-import { IMedia } from '../interfaces/media';
-import { IMessage } from '../interfaces/message';
-import { retriveMessageContactWpp, retriveMessageMediaWpp, retriveMessageWpp } from '../libs/axios';
-import databaseWhatsappPromise from '../db/whatsapp';
-import dayLib from '../libs/dayjs';
+import databaseWhatsappPromise from "../db/whatsapp";
+import { IClientChatWithChat } from "../interfaces/chat";
+import { IMedia } from "../interfaces/media";
+import { IMessage } from "../interfaces/message";
+import {
+  retriveMessageContactWpp,
+  retriveMessageMediaWpp,
+  retriveMessageWpp,
+} from "../libs/axios";
+import dayLib from "../libs/dayjs";
+import { chatQueue } from "../worker/services/chat";
 
-import Media from './media';
+import Media from "./media";
 
 class Message {
   private id!: string;
@@ -26,13 +30,13 @@ class Message {
     private msgId: string,
     private chatIdWpp: string,
     private clientId: string,
-  ) { }
+  ) {}
 
   private async getMessageData() {
     this.database = await databaseWhatsappPromise;
 
     const dataMsg = await this.database.findFirst<IMessage>({
-      table: 'messages',
+      table: "messages",
       where: { id: this.msgId },
       select: { id: true, media_id: true },
     });
@@ -55,46 +59,55 @@ class Message {
           this.createdAt = msg.timestamp;
 
           const chatData = await this.database.findFirst<IClientChatWithChat>({
-            table: 'clients_chats',
+            table: "clients_chats",
             where: { client_id: this.clientId, chat_id: this.chatIdWpp },
-            joins: [{ table: 'chats', alias: 'c', on: { chat_id: 'id' } }],
-            select: { id: true, 'c.is_group': true },
+            joins: [{ table: "chats", alias: "c", on: { chat_id: "id" } }],
+            select: { id: true, "c.is_group": true },
           });
 
           if (chatData) {
             this.chatId = chatData.id;
 
             if (chatData.c_is_group && !msg.fromMe) {
-              const from = await retriveMessageContactWpp(this.clientId, this.msgId);
+              const from = await retriveMessageContactWpp(
+                this.clientId,
+                this.msgId,
+              );
               this.fromId = from.id;
 
               const chatFrom = await this.database.findFirst({
-                table: 'chats',
+                table: "chats",
                 where: { id: this.fromId },
                 select: { id: true },
               });
 
               if (!chatFrom) {
                 await chatQueue.add(
-                  'save-chat',
+                  "save-chat",
                   {
                     chat_id: this.fromId,
                     client_id: this.clientId,
                     group_id: this.chatIdWpp,
                   },
-                  { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+                  {
+                    attempts: 1000,
+                    backoff: { type: "exponential", delay: 5000 },
+                  },
                 );
               }
             }
 
             if (msg.hasMedia) {
-              const media = await retriveMessageMediaWpp(this.clientId, this.msgId);
+              const media = await retriveMessageMediaWpp(
+                this.clientId,
+                this.msgId,
+              );
               if (media) {
                 const { data, fileName, mimeType } = media;
                 const path = `media/${fileName}`;
                 const mediaData = new Media(mimeType, data, path);
                 this.mediaId = await mediaData.save();
-                if (today.diff(msg.timestamp, 'd') <= 10) {
+                if (today.diff(msg.timestamp, "d") <= 10) {
                   await mediaData.down();
                 }
               } else {
@@ -102,7 +115,7 @@ class Message {
               }
             }
           } else {
-            throw new Error('chat not found');
+            throw new Error("chat not found");
           }
         }
       }
@@ -113,20 +126,20 @@ class Message {
     await this.getMessageData();
 
     const msgData = await this.database.findFirst<IMessage>({
-      table: 'messages',
+      table: "messages",
       where: { id: this.id },
       select: { status_id: true },
     });
 
     if (msgData) {
       await this.database.updateIntoTable({
-        table: 'messages',
+        table: "messages",
         dataDict: { status_id: this.statusId, body: this.body },
         where: { id: this.id },
       });
     } else if (this.statusId !== 6) {
       await this.database.insertIntoTable({
-        table: 'messages',
+        table: "messages",
         dataDict: {
           id: this.id,
           type: this.type,
@@ -145,7 +158,7 @@ class Message {
   private async destroy() {
     if (this.mediaId) {
       const mediaData = await this.database.findFirst<IMedia>({
-        table: 'medias',
+        table: "medias",
         where: { id: this.mediaId, is_down: true },
       });
 
@@ -161,7 +174,7 @@ class Message {
       }
     }
     await this.database.deleteFromTable({
-      table: 'messages',
+      table: "messages",
       where: { id: this.id },
     });
   }

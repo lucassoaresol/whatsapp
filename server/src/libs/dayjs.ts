@@ -1,8 +1,8 @@
-import dayjs from 'dayjs';
-import 'dayjs/locale/pt-br';
+import dayjs from "dayjs";
+import "dayjs/locale/pt-br";
 
 const dayLib = dayjs;
 
-dayLib.locale('pt-br');
+dayLib.locale("pt-br");
 
 export default dayLib;

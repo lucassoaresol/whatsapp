@@ -1,4 +1,4 @@
-import { ClientsManager, Database } from 'pg-utils';
+import { ClientsManager, Database } from "pg-utils";
 
 async function getDatabase(id: string): Promise<Database> {
   try {
@@ -9,7 +9,7 @@ async function getDatabase(id: string): Promise<Database> {
     }
     return client.getClientDatabase();
   } catch (error) {
-    console.error('Erro ao inicializar o banco de dados:', error);
+    console.error("Erro ao inicializar o banco de dados:", error);
     throw error;
   }
 }

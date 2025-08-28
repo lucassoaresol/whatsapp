@@ -1,11 +1,11 @@
-import { GroupParticipant } from 'whatsapp-web.js';
 import { Request, Response, Router } from 'express';
+import { GroupParticipant } from 'whatsapp-web.js';
 
-import { formatDate } from '../../utils/formatDate';
+import databaseWhatsappPromise from '../../db/whatsapp';
 import { IChatWpp } from '../../interfaces/chat';
+import { formatDate } from '../../utils/formatDate';
 import { listChatByClientId } from '../../utils/listChatByClientId';
 import { listParticipants } from '../../utils/listParticipants';
-import databaseWhatsappPromise from '../../db/whatsapp';
 
 const chatRouter = Router();
 

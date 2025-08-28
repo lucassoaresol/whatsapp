@@ -1,15 +1,15 @@
-import { CronJob } from 'cron';
+import { CronJob } from "cron";
 
-import { runShellScript } from '../utils/runShellScript';
+import { runShellScript } from "../utils/runShellScript";
 
-import { deleteOldVotes } from './jobs/deleteOldVotes';
-import { removeOldMedias } from './jobs/removeOldMedias';
+import { deleteOldVotes } from "./jobs/deleteOldVotes";
+import { removeOldMedias } from "./jobs/removeOldMedias";
 
 CronJob.from({
-  cronTime: '0 0 * * *',
+  cronTime: "0 0 * * *",
   onTick: async () => {
     await Promise.all([removeOldMedias(10), deleteOldVotes()]);
-    const dirs = ['logs'];
+    const dirs = ["logs"];
     dirs.forEach((el) =>
       runShellScript(`find ${el} -type f -mtime +5 -exec rm {} \\;`),
     );

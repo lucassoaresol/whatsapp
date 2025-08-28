@@ -1,10 +1,10 @@
-import 'dotenv/config';
-import { z } from 'zod';
+import "dotenv/config";
+import { z } from "zod";
 
 const schema = z.object({
   port: z
     .string()
-    .default('3000')
+    .default("3000")
     .transform((val) => parseInt(val, 10)),
 });
 

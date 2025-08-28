@@ -1,11 +1,11 @@
-import QRCode from 'qrcode';
-import Whatsapp, { MessageId } from 'whatsapp-web.js';
+import QRCode from "qrcode";
+import Whatsapp, { MessageId } from "whatsapp-web.js";
 
-import { chatQueue } from '../worker/services/chat';
-import { listChatByClientId } from '../utils/listChatByClientId';
-import { messageQueue } from '../worker/services/message';
-import { voteQueue } from '../worker/services/vote';
-import databaseWhatsappPromise from '../db/whatsapp';
+import databaseWhatsappPromise from "../db/whatsapp";
+import { listChatByClientId } from "../utils/listChatByClientId";
+import { chatQueue } from "../worker/services/chat";
+import { messageQueue } from "../worker/services/message";
+import { voteQueue } from "../worker/services/vote";
 
 const { Client: ClientWpp, LocalAuth } = Whatsapp;
 
@@ -23,14 +23,14 @@ class Client {
       puppeteer: {
         headless: true,
         args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--single-process',
-          '--disable-gpu',
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-accelerated-2d-canvas",
+          "--no-first-run",
+          "--no-zygote",
+          "--single-process",
+          "--disable-gpu",
         ],
       },
     });
@@ -39,35 +39,43 @@ class Client {
   }
 
   private listenEvents() {
-    this.wpp.on('ready', async () => {
+    this.wpp.on("ready", async () => {
       this.isReady = true;
       console.log(`Client ${this.id} ready!`);
       await this.loadChats();
-      console.log('Chats loaded from database.');
+      console.log("Chats loaded from database.");
     });
 
     this.wpp.on(
-      'qr',
+      "qr",
       async (qr) => await QRCode.toFile(`public/qr/${this.id}_qr.png`, qr),
     );
 
-    this.wpp.on('authenticated', () => console.log(`Client ${this.id} authenticated`));
+    this.wpp.on("authenticated", () =>
+      console.log(`Client ${this.id} authenticated`),
+    );
 
-    this.wpp.on('disconnected', (reason) =>
+    this.wpp.on("disconnected", (reason) =>
       console.log(`Client ${this.id} was logged out`, reason),
     );
 
-    this.wpp.on('message', async (message) => await this.saveMessage(message, 2));
+    this.wpp.on(
+      "message",
+      async (message) => await this.saveMessage(message, 2),
+    );
 
-    this.wpp.on('message_create', async (message) => {
+    this.wpp.on("message_create", async (message) => {
       if (message.fromMe) {
         await this.saveMessage(message, 1);
       }
     });
 
-    this.wpp.on('message_edit', async (message) => await this.saveMessage(message, 4));
+    this.wpp.on(
+      "message_edit",
+      async (message) => await this.saveMessage(message, 4),
+    );
 
-    this.wpp.on('message_revoke_everyone', async (message) => {
+    this.wpp.on("message_revoke_everyone", async (message) => {
       await this.saveMessage(message, 5);
       const revoked_msg = message as unknown as {
         _data: { protocolMessageKey: MessageId };
@@ -78,7 +86,7 @@ class Client {
       );
     });
 
-    this.wpp.on('vote_update', async (vote) => await this.saveVote(vote));
+    this.wpp.on("vote_update", async (vote) => await this.saveVote(vote));
   }
 
   public async loadChats() {
@@ -90,12 +98,12 @@ class Client {
     await Promise.all([
       chats.map(async (ch) => {
         return await chatQueue.add(
-          'save-chat',
+          "save-chat",
           {
             chat_id: ch.id._serialized,
             client_id: this.id,
           },
-          { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+          { attempts: 1000, backoff: { type: "exponential", delay: 5000 } },
         );
       }),
     ]);
@@ -107,49 +115,49 @@ class Client {
       const msgId = messageData.id._serialized;
       await Promise.all([
         chatQueue.add(
-          'save-chat',
+          "save-chat",
           {
             chat_id: chatId,
             client_id: this.id,
           },
-          { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+          { attempts: 1000, backoff: { type: "exponential", delay: 5000 } },
         ),
         messageQueue.add(
-          'save-message',
+          "save-message",
           {
             status_id: statusId,
             msg_id: msgId,
             chat_id: chatId,
             client_id: this.id,
           },
-          { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+          { attempts: 1000, backoff: { type: "exponential", delay: 5000 } },
         ),
       ]);
     }
   }
 
   private async saveVote(voteData: Whatsapp.PollVote) {
-    const selectedName = voteData.selectedOptions.at(0)?.name || '';
+    const selectedName = voteData.selectedOptions.at(0)?.name || "";
     const chatId = voteData.voter;
 
     if (chatId.length > 7) {
       await Promise.all([
         chatQueue.add(
-          'save-chat',
+          "save-chat",
           {
             chat_id: chatId,
             client_id: this.id,
           },
-          { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+          { attempts: 1000, backoff: { type: "exponential", delay: 5000 } },
         ),
         voteQueue.add(
-          'save-vote',
+          "save-vote",
           {
             chat_id: chatId,
             client_id: this.id,
             selected_name: selectedName,
           },
-          { attempts: 1000, backoff: { type: 'exponential', delay: 5000 } },
+          { attempts: 1000, backoff: { type: "exponential", delay: 5000 } },
         ),
       ]);
     }
@@ -158,7 +166,10 @@ class Client {
   public async save() {
     const database = await databaseWhatsappPromise;
 
-    await database.insertIntoTable({ table: 'clients', dataDict: { id: this.id } });
+    await database.insertIntoTable({
+      table: "clients",
+      dataDict: { id: this.id },
+    });
   }
 
   public async start() {
@@ -171,7 +182,9 @@ class Client {
       isReady: this.isReady,
     };
 
-    if (this.wpp.info) { return { ...result, ...this.wpp.info }; }
+    if (this.wpp.info) {
+      return { ...result, ...this.wpp.info };
+    }
 
     return result;
   }
