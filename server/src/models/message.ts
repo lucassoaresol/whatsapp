@@ -97,7 +97,7 @@ class Message {
               }
             }
 
-            if (msg.hasMedia) {
+            if (msg.hasMedia && this.statusId !== 5) {
               const media = await retriveMessageMediaWpp(
                 this.clientId,
                 this.msgId,
