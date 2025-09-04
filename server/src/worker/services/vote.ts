@@ -14,6 +14,7 @@ export const voteWorker = new Worker<IRepoVote>(
     const repoVote = new Vote(
       job.data.selected_name,
       job.data.chat_id,
+      job.data.message_id,
       job.data.client_id,
     );
     await repoVote.save();

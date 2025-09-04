@@ -3,8 +3,8 @@ import { Router } from 'express';
 import verifyClient from '../middlewares/verifyClient';
 import verifyClientConnect from '../middlewares/verifyClientConnect';
 
-import clientManagerRouter from './clientManager';
 import clientRouter from './client';
+import clientManagerRouter from './clientManager';
 
 const router = Router();
 

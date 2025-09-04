@@ -9,5 +9,6 @@ export interface IVote {
 export interface IRepoVote {
   selected_name: string;
   chat_id: string;
+  message_id: string;
   client_id: string;
 }

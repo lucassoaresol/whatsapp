@@ -139,6 +139,7 @@ class Client {
   private async saveVote(voteData: Whatsapp.PollVote) {
     const selectedName = voteData.selectedOptions.at(0)?.name || "";
     const chatId = voteData.voter;
+    const messageId = voteData.parentMessage.id._serialized;
 
     if (chatId.length > 7) {
       await Promise.all([
@@ -154,6 +155,7 @@ class Client {
           "save-vote",
           {
             chat_id: chatId,
+            message_id: messageId,
             client_id: this.id,
             selected_name: selectedName,
           },
