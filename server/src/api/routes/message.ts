@@ -97,6 +97,7 @@ messageRouter.get('/:msg_id', async (req: Request, res: Response) => {
       body: message.body,
       fromMe: message.fromMe,
       hasMedia: message.hasMedia,
+      chatId: message.id.remote
     });
     return;
   }

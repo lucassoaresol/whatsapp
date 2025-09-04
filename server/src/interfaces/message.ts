@@ -24,4 +24,5 @@ export interface IMessageWpp {
   body: string;
   fromMe: boolean;
   hasMedia: boolean;
+  chatId: string;
 }
